@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Convose Theme & Layout Customizer",
+  "version": "1.4",
+  "description": "Hides the bloated suggestion grid, makes active chats full screen, and customizes the color theme. Includes IRC and Cyber HUD chat styles.",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.convose.com/*",
+    "*://convose.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.convose.com/*",
+        "*://convose.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}

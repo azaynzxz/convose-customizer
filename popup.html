@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      width: 300px;
+      padding: 14px;
+      background: #111114;
+      color: #f3f4f6;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 12.5px;
+      margin: 0;
+      user-select: none;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #26262e;
+    }
+    h3 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ff6b00;
+      letter-spacing: 0.2px;
+    }
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #1f1f29;
+      color: #9ca3af;
+      border: 1px solid #2e2e3a;
+    }
+    .exp-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(255, 107, 0, 0.16);
+      color: #ff6b00;
+      border: 1px solid rgba(255, 107, 0, 0.35);
+      margin-left: 4px;
+      vertical-align: middle;
+      letter-spacing: 0.4px;
+    }
+    .section-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #9ca3af;
+      margin: 10px 0 6px 0;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+    .row label {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+    select {
+      width: 155px;
+      padding: 5px 8px;
+      background: #1b1b22;
+      color: #f3f4f6;
+      border: 1px solid #32323f;
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+    }
+    select:focus {
+      border-color: #ff6b00;
+    }
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+      margin-bottom: 10px;
+    }
+    .preset-chip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 5px 4px;
+      background: #1b1b22;
+      border: 1px solid #2d2d3a;
+      border-radius: 6px;
+      color: #d1d5db;
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .preset-chip:hover {
+      border-color: #6b7280;
+      background: #23232d;
+    }
+    .preset-chip.active {
+      border-color: #ff6b00;
+      background: #291c14;
+      color: #ffffff;
+    }
+    .swatch-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    input[type="color"] {
+      border: 1px solid #32323f;
+      border-radius: 5px;
+      width: 34px;
+      height: 24px;
+      cursor: pointer;
+      background: #1b1b22;
+      padding: 1px;
+    }
+    input[type="checkbox"] {
+      width: 15px;
+      height: 15px;
+      accent-color: #ff6b00;
+      cursor: pointer;
+    }
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 155px;
+    }
+    input[type="range"] {
+      flex: 1;
+      accent-color: #ff6b00;
+      cursor: pointer;
+    }
+    .slider-val {
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      color: #9ca3af;
+      min-width: 32px;
+      text-align: right;
+    }
+    hr {
+      border: 0;
+      border-top: 1px solid #24242c;
+      margin: 10px 0;
+    }
+    button#resetBtn {
+      width: 100%;
+      padding: 8px;
+      background: #1f1f27;
+      color: #f3f4f6;
+      border: 1px solid #32323f;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    button#resetBtn:hover {
+      background: #ff6b00;
+      border-color: #ff6b00;
+      color: #ffffff;
+    }
+    .status {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #9ca3af;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h3>Convose Customizer</h3>
+    <span class="badge">v1.4</span>
+  </div>
+
+  <div class="section-title">Theme Pack Presets</div>
+  <div class="row">
+    <label for="themePreset">Active Preset</label>
+    <select id="themePreset">
+      <option value="midnight-orange">Midnight Orange</option>
+      <option value="crimson-velvet">Crimson Velvet</option>
+      <option value="cyberpunk-neon">Cyberpunk Neon</option>
+      <option value="catppuccin-mocha">Catppuccin Mocha</option>
+      <option value="nord-frost">Nord Frost</option>
+      <option value="emerald-forest">Emerald Forest</option>
+      <option value="dracula-pro">Dracula Pro</option>
+      <option value="solarized-dark">Solarized Dark</option>
+      <option value="komanda-irc">Komanda IRC</option>
+      <option value="cyber-hud">Cyber HUD (Cyan)</option>
+      <option value="night-city">Night City (Magenta)</option>
+      <option value="olive-union">Olive Union (Khaki)</option>
+      <option value="custom">Custom Colors</option>
+    </select>
+  </div>
+
+  <div class="preset-grid" id="presetQuickGrid">
+    <button type="button" class="preset-chip" data-preset="midnight-orange">
+      <span class="swatch-dot" style="background:#ff6b00"></span>Orange
+    </button>
+    <button type="button" class="preset-chip" data-preset="crimson-velvet">
+      <span class="swatch-dot" style="background:#e11d48"></span>Crimson
+    </button>
+    <button type="button" class="preset-chip" data-preset="cyberpunk-neon">
+      <span class="swatch-dot" style="background:#2859a9"></span>Cyber
+    </button>
+    <button type="button" class="preset-chip" data-preset="catppuccin-mocha">
+      <span class="swatch-dot" style="background:#cba6f7"></span>Mocha
+    </button>
+    <button type="button" class="preset-chip" data-preset="nord-frost">
+      <span class="swatch-dot" style="background:#88c0d0"></span>Nord
+    </button>
+    <button type="button" class="preset-chip" data-preset="emerald-forest">
+      <span class="swatch-dot" style="background:#10b981"></span>Emerald
+    </button>
+    <button type="button" class="preset-chip" data-preset="dracula-pro">
+      <span class="swatch-dot" style="background:#ff79c6"></span>Dracula
+    </button>
+    <button type="button" class="preset-chip" data-preset="komanda-irc">
+      <span class="swatch-dot" style="background:#5294e2"></span>IRC
+    </button>
+    <button type="button" class="preset-chip" data-preset="cyber-hud">
+      <span class="swatch-dot" style="background:#19f0ff"></span>HUD
+    </button>
+    <button type="button" class="preset-chip" data-preset="night-city">
+      <span class="swatch-dot" style="background:#ff2a6d"></span>City
+    </button>
+    <button type="button" class="preset-chip" data-preset="olive-union">
+      <span class="swatch-dot" style="background:#d2dc86"></span>Olive
+    </button>
+  </div>
+
+  <hr>
+
+  <div class="section-title">Layout &amp; Focus</div>
+  <div class="row">
+    <label for="hideGrid">Hide Suggestion Grid</label>
+    <input type="checkbox" id="hideGrid">
+  </div>
+  <div class="row">
+    <label for="fullScreenChat">Full-Screen Active Chat</label>
+    <input type="checkbox" id="fullScreenChat">
+  </div>
+  <div class="row">
+    <label for="hideSmartPrompts">Hide Chat Starter Chips</label>
+    <input type="checkbox" id="hideSmartPrompts">
+  </div>
+  <div class="row">
+    <label for="ircMode">IRC Chat Style <span class="exp-badge">EXP</span></label>
+    <input type="checkbox" id="ircMode">
+  </div>
+  <div class="row">
+    <label for="cyberMode">Cyber Style <span class="exp-badge">HUD</span></label>
+    <input type="checkbox" id="cyberMode">
+  </div>
+  <div class="row">
+    <label for="cyberFx">Cyber FX (scan / glow)</label>
+    <input type="checkbox" id="cyberFx">
+  </div>
+
+  <hr>
+
+  <div class="section-title">Typography &amp; Shape</div>
+  <div class="row">
+    <label for="fontFamily">Font Family</label>
+    <select id="fontFamily">
+      <option value="default">Default (Nunito)</option>
+      <option value="inter">Inter (Clean Sans)</option>
+      <option value="plus-jakarta">Plus Jakarta Sans</option>
+      <option value="poppins">Poppins (Geometric)</option>
+      <option value="space-grotesk">Space Grotesk</option>
+      <option value="jetbrains-mono">JetBrains Mono</option>
+      <option value="lora">Lora (Editorial Serif)</option>
+      <option value="system">System UI Native</option>
+    </select>
+  </div>
+  <div class="row">
+    <label for="borderRadius">Corner Radius</label>
+    <div class="slider-wrap">
+      <input type="range" id="borderRadius" min="0" max="28" step="1">
+      <span id="borderRadiusVal" class="slider-val">12px</span>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="section-title">Palette Colors</div>
+  <div class="row">
+    <label for="bgColor">Main Background</label>
+    <input type="color" id="bgColor">
+  </div>
+  <div class="row">
+    <label for="sidebarColor">Sidebar Background</label>
+    <input type="color" id="sidebarColor">
+  </div>
+  <div class="row">
+    <label for="cardColor">Chat Box Background</label>
+    <input type="color" id="cardColor">
+  </div>
+  <div class="row">
+    <label for="bubbleColor">Message Bubble</label>
+    <input type="color" id="bubbleColor">
+  </div>
+  <div class="row">
+    <label for="accentColor">Primary Accent</label>
+    <input type="color" id="accentColor">
+  </div>
+  <div class="row">
+    <label for="secondaryColor">Own Messages (Cyber)</label>
+    <input type="color" id="secondaryColor">
+  </div>
+  <div class="row">
+    <label for="textColor">Text Color</label>
+    <input type="color" id="textColor">
+  </div>
+
+  <hr>
+  <button id="resetBtn">Reset to Default</button>
+  <div id="statusText" class="status">Ready</div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
