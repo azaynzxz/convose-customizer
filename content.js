@@ -9,6 +9,8 @@
     skeuoMode: false,
     arcadeMode: false,
     brutalMode: false,
+    spookyMode: false,
+    spookyBlood: false,
     cyberFx: true,
     bgColor: "#0a0a0a",
     sidebarColor: "#121212",
@@ -42,18 +44,21 @@
     "cyber": "https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap",
     "skeuo": "https://fonts.googleapis.com/css2?family=Pacifico&display=swap",
     "brutal": "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap",
-    "arcade": "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;700;800&display=swap"
+    "arcade": "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;700;800&display=swap",
+    "spooky": "https://fonts.googleapis.com/css2?family=Creepster&family=Nunito:wght@600;700;800&display=swap"
   };
 
   const CYBER_HUD_ID = "convose-cyber-hud";
   const SKEUO_DEFS_ID = "convose-skeuo-defs";
   const SKEUO_FX_ID = "convose-skeuo-fx";
+  const SPOOKY_FX_ID = "convose-spooky-fx";
 
   // Only one chat style can be active. Priority: skeuo > cyber > irc.
   function activeMode(s) {
     if (s.skeuoMode) return "skeuo";
     if (s.arcadeMode) return "arcade";
     if (s.brutalMode) return "brutal";
+    if (s.spookyMode) return "spooky";
     if (s.cyberMode) return "cyber";
     if (s.ircMode) return "irc";
     return "";
@@ -1123,6 +1128,8 @@
     ${activeMode(settings) === "arcade" ? buildArcadeCss(settings, fontStack) : ""}
 
     ${activeMode(settings) === "brutal" ? buildBrutalCss(settings, fontStack) : ""}
+
+    ${activeMode(settings) === "spooky" ? buildSpookyCss(settings, fontStack) : ""}
   `;
   }
 
@@ -2948,6 +2955,482 @@
      secondaryColor = own bubbles and hover, textColor = ink.
      ============================================================= */
 
+  /* =============================================================
+     SPOOKY STYLE (settings.spookyMode): Halloween.
+     Built on the skeuo layout hooks (no textures), then flattened and re-coloured:
+     dark purple night, pumpkin-orange outlines, Creepster headings.
+     Pumpkins, bats, cobwebs, a spider, a ghost and a moon are inline SVG in a
+     fixed overlay (#convose-spooky-fx, top frame only, pointer-events none), so no
+     image URLs are needed (CSP safe) and React's tree is never touched.
+     Palette: bgColor = night, sidebarColor = crypt, cardColor = chat panel,
+     bubbleColor = other bubbles, accentColor = pumpkin, secondaryColor = own bubbles.
+     ============================================================= */
+
+  function spookyPumpkin(face) {
+    const eyes = face
+      ? '<path d="M28 47 L40 47 L34 34 Z" fill="#ffd44a"/><path d="M60 47 L72 47 L66 34 Z" fill="#ffd44a"/>' +
+        '<path d="M46 56 L54 56 L50 48 Z" fill="#ffd44a"/>' +
+        '<path d="M24 62 Q50 90 76 62 L68 62 L63 70 L56 63 L50 72 L44 63 L37 70 L32 62 Z" fill="#ffd44a"/>'
+      : '';
+    return '<svg viewBox="0 0 100 92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<ellipse cx="50" cy="86" rx="38" ry="4" fill="#000" opacity=".35"/>' +
+      '<ellipse cx="27" cy="55" rx="25" ry="31" fill="#d9560a" stroke="#6e2a03" stroke-width="2.5"/>' +
+      '<ellipse cx="73" cy="55" rx="25" ry="31" fill="#d9560a" stroke="#6e2a03" stroke-width="2.5"/>' +
+      '<ellipse cx="38" cy="55" rx="24" ry="33" fill="#f06c14" stroke="#6e2a03" stroke-width="2.5"/>' +
+      '<ellipse cx="62" cy="55" rx="24" ry="33" fill="#f06c14" stroke="#6e2a03" stroke-width="2.5"/>' +
+      '<ellipse cx="50" cy="55" rx="18" ry="34" fill="#ff8a24" stroke="#6e2a03" stroke-width="2.5"/>' +
+      '<path d="M45 22 Q46 9 56 5 L62 10 Q55 14 55 23 Z" fill="#4d7a1c" stroke="#27400c" stroke-width="2"/>' +
+      '<path d="M56 12 Q70 6 72 16" fill="none" stroke="#4d7a1c" stroke-width="2.5" stroke-linecap="round"/>' +
+      eyes + '</svg>';
+  }
+
+  function spookyBat() {
+    return '<svg viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<path d="M30 11 C26 3 14 1 1 8 C8 9 10 14 9 21 C13 16 18 16 21 22 C24 18 27 18 30 25 C33 18 36 18 39 22 C42 16 47 16 51 21 C50 14 52 9 59 8 C46 1 34 3 30 11 Z" fill="#150a20" stroke="#6b3fa0" stroke-width="1"/>' +
+      '<circle cx="27" cy="11" r="1.2" fill="#ff5a3c"/><circle cx="33" cy="11" r="1.2" fill="#ff5a3c"/>' +
+      '<path d="M27 8 L28 4 L30 8 L32 4 L33 8" fill="#150a20"/></svg>';
+  }
+
+  function spookyWeb() {
+    let arcs = "";
+    [30, 55, 80, 105].forEach((r) => {
+      arcs += '<path d="M' + r + ' 0 Q' + (r * 0.5) + ' ' + (r * 0.5) + ' 0 ' + r + '" fill="none"/>';
+    });
+    return '<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<g stroke="#d8d0e6" stroke-width="1" opacity=".55">' +
+      '<path d="M0 0 L120 0 M0 0 L112 40 M0 0 L86 86 M0 0 L40 112 M0 0 L0 120" fill="none"/>' + arcs + '</g></svg>';
+  }
+
+  function spookySpider() {
+    return '<svg viewBox="0 0 40 110" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<line x1="20" y1="0" x2="20" y2="70" stroke="#d8d0e6" stroke-width="1" opacity=".7"/>' +
+      '<g stroke="#120818" stroke-width="2" fill="none" stroke-linecap="round">' +
+      '<path d="M14 80 L4 70 L1 78"/><path d="M14 84 L2 84 L0 92"/><path d="M15 88 L5 98 L8 106"/><path d="M17 91 L12 104 L16 108"/>' +
+      '<path d="M26 80 L36 70 L39 78"/><path d="M26 84 L38 84 L40 92"/><path d="M25 88 L35 98 L32 106"/><path d="M23 91 L28 104 L24 108"/></g>' +
+      '<ellipse cx="20" cy="86" rx="8" ry="9" fill="#1a0c26" stroke="#6b3fa0" stroke-width="1"/>' +
+      '<circle cx="20" cy="74" r="5.5" fill="#1a0c26" stroke="#6b3fa0" stroke-width="1"/>' +
+      '<circle cx="18" cy="73" r="1.3" fill="#ff3b2f"/><circle cx="22" cy="73" r="1.3" fill="#ff3b2f"/>' +
+      '<path d="M17 84 L20 92 L23 84 Z" fill="#ff7a1a" opacity=".8"/></svg>';
+  }
+
+  function spookyGhost() {
+    return '<svg viewBox="0 0 60 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<path d="M30 4 C14 4 6 16 6 32 L6 72 L14 64 L22 74 L30 64 L38 74 L46 64 L54 72 L54 32 C54 16 46 4 30 4 Z" fill="#ece7f8" opacity=".92"/>' +
+      '<ellipse cx="22" cy="30" rx="4" ry="6" fill="#1c1030"/><ellipse cx="38" cy="30" rx="4" ry="6" fill="#1c1030"/>' +
+      '<ellipse cx="30" cy="45" rx="5" ry="7" fill="#1c1030"/></svg>';
+  }
+
+  function spookyTomb() {
+    return '<svg viewBox="0 0 50 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<path d="M4 62 L4 24 C4 8 46 8 46 24 L46 62 Z" fill="#6c6779" stroke="#2c2836" stroke-width="2.5"/>' +
+      '<path d="M25 22 L25 42 M17 29 L33 29" stroke="#2c2836" stroke-width="3" stroke-linecap="round" fill="none"/>' +
+      '<path d="M4 62 Q10 54 14 62 M30 62 Q36 56 46 62" stroke="#3f7a2a" stroke-width="3" fill="none"/></svg>';
+  }
+
+  function spookyEyes() {
+    return '<svg viewBox="0 0 50 22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<ellipse cx="13" cy="11" rx="9" ry="6" fill="#b6ff3a"/><ellipse cx="37" cy="11" rx="9" ry="6" fill="#b6ff3a"/>' +
+      '<ellipse cx="13" cy="11" rx="2" ry="6" fill="#0b0510"/><ellipse cx="37" cy="11" rx="2" ry="6" fill="#0b0510"/></svg>';
+  }
+
+  function spookyDrips() {
+    // Blood running down from the top edge of the screen (stretches to the full width).
+    const drops = [[3, 38], [9, 70], [14, 26], [21, 52], [27, 90], [33, 34], [41, 60], [47, 24], [54, 78], [61, 40], [68, 56], [74, 28], [81, 84], [88, 36], [94, 62]];
+    let p = '<path d="M0 0 H100 V9 ';
+    drops.slice().reverse().forEach(([x, h]) => {
+      p += 'L' + (x + 1.1) + ' 9 L' + (x + 1.1) + ' ' + (h * 0.5) + ' Q' + x + ' ' + (h * 0.5 + 6) + ' ' + (x - 1.1) + ' ' + (h * 0.5) + ' L' + (x - 1.1) + ' 9 ';
+    });
+    p += 'Z" fill="#8a0a14"/>';
+    let d = "";
+    drops.forEach(([x, h]) => { d += '<ellipse cx="' + x + '" cy="' + (h * 0.5 + 3) + '" rx="1.1" ry="2.6" fill="#b30f1d"/>'; });
+    return '<svg viewBox="0 0 100 50" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' + p + '<path d="M0 0 H100 V2.5 H0 Z" fill="#5c060d"/>' + d + '</svg>';
+  }
+
+  function spookySkull() {
+    return '<svg viewBox="0 0 60 70" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<path d="M30 4 C12 4 4 18 6 32 C7 40 12 44 14 48 L14 58 L22 58 L22 52 L26 58 L34 58 L38 52 L38 58 L46 58 L46 48 C48 44 53 40 54 32 C56 18 48 4 30 4 Z" fill="#d9d2c0" stroke="#3a3328" stroke-width="2"/>' +
+      '<ellipse cx="20" cy="30" rx="7" ry="8" fill="#0a0507"/><ellipse cx="40" cy="30" rx="7" ry="8" fill="#0a0507"/>' +
+      '<circle cx="20" cy="31" r="2" fill="#d4121f"/><circle cx="40" cy="31" r="2" fill="#d4121f"/>' +
+      '<path d="M30 38 L26 46 L34 46 Z" fill="#0a0507"/>' +
+      '<path d="M22 52 V58 M30 52 V58 M38 52 V58" stroke="#3a3328" stroke-width="1.5"/>' +
+      '<path d="M44 8 L40 20 L45 28" stroke="#6e0a12" stroke-width="2" fill="none"/>' +
+      '<path d="M16 58 Q16 66 18 66 Q20 66 20 58" fill="#a30f1b"/></svg>';
+  }
+
+  function spookySplat() {
+    return '<svg viewBox="0 0 90 70" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<path d="M45 8 C52 6 56 14 62 12 C70 10 72 22 78 26 C86 30 80 40 74 44 C80 52 70 60 62 56 C58 66 48 64 44 58 C38 66 26 60 28 52 C18 54 12 44 20 38 C10 32 18 22 26 24 C26 14 36 10 45 8 Z" fill="#7a0810"/>' +
+      '<circle cx="12" cy="14" r="3" fill="#7a0810"/><circle cx="82" cy="10" r="2.2" fill="#7a0810"/><circle cx="6" cy="52" r="2.5" fill="#7a0810"/>' +
+      '<path d="M30 30 C38 26 44 32 52 28" stroke="#b30f1d" stroke-width="2" fill="none" opacity=".6"/></svg>';
+  }
+  function spookyFxMarkup(blood) {
+    const el = (cls, inner) => '<div class="' + cls + '">' + inner + '</div>';
+    return el("sp-web sp-web-l", spookyWeb()) +
+      el("sp-web sp-web-r", spookyWeb()) +
+      el("sp-spider", spookySpider()) +
+
+      el("sp-bat sp-bat-1", spookyBat()) +
+      el("sp-bat sp-bat-2", spookyBat()) +
+      el("sp-bat sp-bat-3", spookyBat()) +
+
+      el("sp-tomb", spookyTomb()) +
+      el("sp-pump sp-pump-a", spookyPumpkin(true)) +
+      el("sp-pump sp-pump-b", spookyPumpkin(false)) +
+      el("sp-pump sp-pump-c", spookyPumpkin(true)) +
+      el("sp-eyes", spookyEyes()) +
+      (blood ? el("sp-drips", spookyDrips()) + el("sp-skull", spookySkull()) + el("sp-splat", spookySplat()) : "");
+  }
+
+  function buildSpookyCss(settings, fontStack) {
+    const BG = settings.bgColor;
+    const SIDE = settings.sidebarColor;
+    const PAPER = settings.cardColor;
+    const PB = settings.bubbleColor;
+    const A = settings.accentColor;
+    const S = settings.secondaryColor || "#6b2fa0";
+    const INK = settings.textColor;
+    const fx = settings.cyberFx !== false;
+    const K = "#0b0510";
+    const crt = `"Creepster", "Chiller", "Papyrus", cursive`;
+    const body = fontStack || `"Nunito", "Segoe UI", Arial, sans-serif`;
+    const shade = (c, b) => `color-mix(in srgb, ${c}, black ${b}%)`;
+    const tone = (c, w) => `color-mix(in srgb, ${c}, white ${w}%)`;
+    const rgba = (c, pct) => `color-mix(in srgb, ${c} ${pct}%, transparent)`;
+    const ink = inkOn(A);
+    const edge = rgba(A, 50);
+    const gridSlot = `[data-component="suggestions-grid"] > div:not(.fixed) > div.relative.block.size-full > div[data-chat-id]`;
+    const pill = `html [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]),
+      aside[data-component="sidebar"] [data-component="add-interest-input"],
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a)`;
+
+    const base = buildSkeuoCss({ ...settings, cyberFx: false }, body);
+
+    return base + `
+      /* ===== Spooky layer: flatten the skeuo look into a haunted night ===== */
+
+      html body,
+      [data-component="suggestions-grid"] {
+        background-color: ${BG} !important;
+        background-image:
+          radial-gradient(ellipse at 82% 0%, ${rgba(S, 30)}, transparent 55%),
+          radial-gradient(ellipse at 8% 100%, ${rgba(A, 14)}, transparent 50%) !important;
+      }
+
+      [data-component="suggestions-grid"]::before,
+      [data-component="suggestions-grid"]::after { display: none !important; }
+
+      ${gridSlot} {
+        border-radius: 12px !important;
+        box-shadow: 0 0 0 2px ${edge}, 0 4px 0 ${K} !important;
+      }
+
+      ${gridSlot}.bg-modal-input-border-focus-color {
+        box-shadow: 0 0 0 2px ${A}, 0 4px 0 ${K} !important;
+      }
+
+      /* Header */
+      html [data-chatbox] [data-component="group-card-header"],
+      html [data-chatbox] header {
+        background: ${shade(PAPER, 30)} !important;
+        border-bottom: 2px solid ${A} !important;
+        box-shadow: none !important;
+        border-radius: 10px 10px 0 0 !important;
+      }
+
+      [data-chatbox] [data-component="group-card-header"]::before,
+      [data-chatbox] header::before { background: transparent !important; }
+
+      [data-chatbox] header::after { border-bottom: 1.5px dashed ${rgba(A, 40)} !important; }
+
+      html [data-chatbox] [data-component="group-card-header"] p,
+      html [data-chatbox] header [data-cy-title] {
+        font-family: ${crt} !important;
+        font-size: 18px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.05em !important;
+        color: ${A} !important;
+        text-shadow: none !important;
+      }
+
+      html [data-chatbox] header button,
+      html [data-chatbox] header svg { color: ${A} !important; filter: none !important; }
+
+      html [data-chatbox] header img {
+        border-radius: 50% !important;
+        box-shadow: 0 0 0 2px ${A} !important;
+      }
+
+      /* Message area */
+      [data-chatbox] .bg-chat-message-list-bg,
+      [data-chatbox] .bg-group-card-chat-screen-bg {
+        background: ${PAPER} !important;
+        box-shadow: none !important;
+      }
+
+      /* Bubbles */
+      html [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+        border: 2px solid ${edge} !important;
+        border-radius: 14px !important;
+        box-shadow: none !important;
+        background-image: none !important;
+        background-color: ${PB} !important;
+        opacity: 1 !important;
+      }
+
+      html [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="image"]):not([data-message-type="intro"]),
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="image"]):not([data-message-type="intro"]) {
+        background-image: none !important;
+      }
+
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+        background-color: ${S} !important;
+        border-color: ${rgba(tone(S, 40), 70)} !important;
+      }
+
+      html [data-msg-row] [data-msg-bubble="true"] > div.block {
+        font-family: ${body} !important;
+        font-weight: 600 !important;
+        text-shadow: none !important;
+      }
+
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block,
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block span {
+        text-shadow: none !important;
+      }
+
+      html [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before {
+        font-family: ${crt};
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        color: ${A};
+        text-shadow: none;
+      }
+
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before {
+        color: ${tone(S, 70)};
+        text-shadow: none;
+      }
+
+      html [data-msg-row] [data-msg-bubble="true"] a { color: ${tone(A, 25)} !important; }
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] a { color: #ffffff !important; }
+
+      [data-component="chat-message-reply"] > div.bg-msg-bubble-reply-bg {
+        background: rgba(0, 0, 0, 0.28) !important;
+        border: 1px solid ${edge} !important;
+        border-left: 4px solid ${A} !important;
+        box-shadow: none !important;
+      }
+
+      [data-msg-reactions],
+      .bg-buble-reaction-bg,
+      .group\\/smart > div > div {
+        background: ${PB} !important;
+        border: 1px solid ${edge} !important;
+        box-shadow: none !important;
+        color: ${INK} !important;
+      }
+
+      .bg-buble-reacted-bg,
+      [data-msg-reactions].bg-buble-reacted-bg {
+        background: ${A} !important;
+        border-color: ${shade(A, 45)} !important;
+        color: ${ink} !important;
+      }
+
+      /* Input bar */
+      [data-component="chat-input"] {
+        background: ${shade(PAPER, 25)} !important;
+        box-shadow: inset 0 1px 0 ${rgba(A, 35)} !important;
+      }
+
+      [data-component="chat-input"] .bg-input-text-msg-form {
+        background: ${PB} !important;
+        border: 1px solid ${edge} !important;
+        box-shadow: none !important;
+      }
+
+      [data-component="chat-input"] svg { color: ${A} !important; filter: none !important; }
+
+      /* Sidebar */
+      html aside[data-component="sidebar"] {
+        text-shadow: none;
+        border-right: 2px solid ${edge} !important;
+      }
+
+      aside[data-component="sidebar"] article.group\\/row,
+      aside[data-component="sidebar"] [data-interest-chip],
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a {
+        background-image: none !important;
+        background-color: ${tone(SIDE, 7)} !important;
+        border: 1px solid ${rgba(A, 30)} !important;
+        border-radius: 10px !important;
+        box-shadow: none !important;
+      }
+
+      aside[data-component="sidebar"] article.group\\/row:hover,
+      aside[data-component="sidebar"] [data-interest-chip]:hover,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button:hover,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a:hover {
+        background-image: none !important;
+        background-color: ${A} !important;
+        box-shadow: none !important;
+      }
+
+      aside[data-component="sidebar"] > div.-mb-0\\.5.mt-1\\.5 > p,
+      aside[data-component="sidebar"] section > div.-mb-0\\.5 > span {
+        font-family: ${crt} !important;
+        font-size: 16px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0.06em !important;
+        text-transform: none !important;
+        color: ${A} !important;
+      }
+
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 {
+        background-color: ${shade(SIDE, 35)} !important;
+        border-top: 2px solid ${edge} !important;
+        box-shadow: none !important;
+      }
+
+      /* Pumpkin buttons */
+      ${pill} {
+        background-color: ${A} !important;
+        background-image: none !important;
+        border: 2px solid ${shade(A, 55)} !important;
+        border-radius: 16px !important;
+        box-shadow: 0 3px 0 ${shade(A, 60)} !important;
+        color: ${ink} !important;
+        text-shadow: none !important;
+      }
+
+      html aside[data-component="sidebar"] [data-component="add-interest-input"] *,
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a),
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a) * {
+        color: ${ink} !important;
+        text-shadow: none !important;
+        font-weight: 800 !important;
+      }
+
+      aside[data-component="sidebar"] [data-cy-badge] {
+        background-image: none !important;
+        background-color: ${S} !important;
+        border: 1px solid ${K} !important;
+        box-shadow: none !important;
+        color: #ffffff !important;
+      }
+
+      .bg-primary,
+      .bg-start-quick-call-btn-bg,
+      [data-component="group-call-banner"],
+      [data-component="mic-button"].bg-\\[\\#5865f2\\],
+      .bg-\\[\\#5865f2\\] {
+        background-image: none !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+      }
+
+      html, [data-chatbox], aside[data-component="sidebar"] {
+        scrollbar-width: thin;
+        scrollbar-color: ${A} rgba(0, 0, 0, 0.3);
+      }
+
+      ${settings.spookyBlood ? `
+      /* ===== Blood variant: near-black surfaces, dripping headers, red wash ===== */
+      html body,
+      [data-component="suggestions-grid"] {
+        background-image:
+          radial-gradient(ellipse at 50% 125%, ${rgba(A, 30)}, transparent 55%),
+          radial-gradient(ellipse at 50% -20%, ${rgba(A, 12)}, transparent 50%) !important;
+      }
+
+      [data-chatbox] .bg-chat-message-list-bg,
+      [data-chatbox] .bg-group-card-chat-screen-bg {
+        background:
+          linear-gradient(${A}, ${A}) 0 0 / 100% 3px no-repeat,
+          linear-gradient(90deg, transparent 0 40px, ${shade(A, 8)} 40px 46px, transparent 46px) 0 0 / 97px 16px repeat-x,
+          radial-gradient(circle at 43px 16px, ${shade(A, 8)} 4.5px, transparent 5px) 0 0 / 97px 22px repeat-x,
+          linear-gradient(90deg, transparent 0 18px, ${shade(A, 20)} 18px 22px, transparent 22px) 0 0 / 143px 9px repeat-x,
+          radial-gradient(circle at 20px 9px, ${shade(A, 20)} 3.2px, transparent 3.7px) 0 0 / 143px 13px repeat-x,
+          linear-gradient(180deg, ${rgba(A, 10)}, transparent 30%),
+          ${PAPER} !important;
+      }
+
+      html [data-chatbox] [data-component="group-card-header"],
+      html [data-chatbox] header {
+        background: ${shade(PAPER, 45)} !important;
+        border-bottom: 3px solid ${shade(A, 5)} !important;
+      }
+
+      html [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+        border-color: ${rgba(A, 60)} !important;
+      }
+
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+        border-color: ${A} !important;
+        box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35) !important;
+      }
+
+      html [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before {
+        color: ${tone(A, 25)};
+      }
+
+      ${gridSlot} {
+        box-shadow: 0 0 0 2px ${shade(A, 20)}, 0 5px 0 ${K} !important;
+      }
+
+      ${gridSlot}.bg-modal-input-border-focus-color {
+        box-shadow: 0 0 0 2px ${A}, 0 0 0 5px ${rgba(A, 30)}, 0 5px 0 ${K} !important;
+      }
+
+      #${SPOOKY_FX_ID} .sp-web svg g { stroke: #c9a3a8; }
+      ` : ""}
+      /* ===== Overlay: pumpkins, bats, cobwebs, spider, ghost, moon ===== */
+      #${SPOOKY_FX_ID} {
+        position: fixed;
+        inset: 0;
+        z-index: 2147482999;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      #${SPOOKY_FX_ID} > div { position: absolute; }
+      #${SPOOKY_FX_ID} svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+      #${SPOOKY_FX_ID} .sp-web { top: 0; width: 130px; height: 130px; }
+      #${SPOOKY_FX_ID} .sp-web-l { left: 0; }
+      #${SPOOKY_FX_ID} .sp-web-r { right: 0; transform: scaleX(-1); }
+      #${SPOOKY_FX_ID} .sp-spider { top: 0; right: 34px; width: 30px; height: 84px; transform-origin: 50% 0; }
+
+      #${SPOOKY_FX_ID} .sp-bat { width: 40px; height: 20px; }
+      #${SPOOKY_FX_ID} .sp-bat-1 { top: 46px; left: 34%; }
+      #${SPOOKY_FX_ID} .sp-bat-2 { top: 22px; left: 52%; width: 30px; height: 15px; }
+      #${SPOOKY_FX_ID} .sp-bat-3 { top: 70px; left: 72%; width: 34px; height: 17px; }
+
+      #${SPOOKY_FX_ID} .sp-tomb { right: 150px; bottom: -8px; width: 34px; height: 42px; }
+      #${SPOOKY_FX_ID} .sp-pump-a { right: 6px; bottom: -14px; width: 76px; height: 70px; }
+      #${SPOOKY_FX_ID} .sp-pump-b { right: 80px; bottom: -12px; width: 50px; height: 46px; }
+      #${SPOOKY_FX_ID} .sp-pump-c { right: 118px; bottom: -10px; width: 38px; height: 35px; }
+      #${SPOOKY_FX_ID} .sp-eyes { left: 8px; bottom: 74px; width: 34px; height: 15px; opacity: 0.85; }
+      #${SPOOKY_FX_ID} .sp-drips { top: 0; left: 0; width: 100%; height: 64px; opacity: 0.95; }
+      #${SPOOKY_FX_ID} .sp-skull { left: 78px; bottom: -6px; width: 34px; height: 40px; }
+      #${SPOOKY_FX_ID} .sp-splat { right: 210px; bottom: -22px; width: 80px; height: 62px; opacity: 0.9; }
+
+      ${fx ? `
+      #${SPOOKY_FX_ID} .sp-bat-1 { animation: sp-drift 9s ease-in-out infinite; }
+      #${SPOOKY_FX_ID} .sp-bat-2 { animation: sp-drift 7s ease-in-out -2s infinite; }
+      #${SPOOKY_FX_ID} .sp-bat-3 { animation: sp-drift 11s ease-in-out -5s infinite; }
+      #${SPOOKY_FX_ID} .sp-spider { animation: sp-sway 4s ease-in-out infinite; }
+
+      @keyframes sp-drift { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(34px, 12px); } }
+      @keyframes sp-sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+
+      @media (prefers-reduced-motion: reduce) {
+        #${SPOOKY_FX_ID} > div { animation: none !important; }
+      }` : ""}
+    `;
+  }
+
   // Pick black or white text for a background colour (whichever has more contrast).
   function inkOn(hex) {
     const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
@@ -3251,6 +3734,25 @@
     }
   }
 
+  // Halloween decorations: one fixed overlay on <html>, top frame only, removed when the style is off.
+  function syncSpookyOverlay() {
+    const on = activeMode(currentSettings) === "spooky" && window.top === window;
+    const existing = document.getElementById(SPOOKY_FX_ID);
+    if (!on) {
+      if (existing) existing.remove();
+      return;
+    }
+    const blood = currentSettings.spookyBlood ? "1" : "0";
+    if (existing && existing.getAttribute("data-blood") === blood) return;
+    if (existing) existing.remove();
+    if (!document.documentElement || !document.body) return;
+    const fx = document.createElement("div");
+    fx.id = SPOOKY_FX_ID;
+    fx.setAttribute("data-blood", blood);
+    fx.setAttribute("aria-hidden", "true");
+    fx.innerHTML = spookyFxMarkup(blood === "1");
+    document.documentElement.appendChild(fx);
+  }
   const IRC_NICK_PALETTE = [
     "#5294e2",
     "#2ecc71",
@@ -3274,7 +3776,7 @@
     const mode = activeMode(currentSettings);
     if (!mode) return;
     // Cyber and skeuo styles both use the per-bubble tag attributes
-    const cyber = mode === "cyber" || mode === "skeuo" || mode === "arcade" || mode === "brutal";
+    const cyber = mode === "cyber" || mode === "skeuo" || mode === "arcade" || mode === "brutal" || mode === "spooky";
 
     const myInput = document.querySelector('[data-component="my-username"]');
     const myName = (myInput && myInput.value && myInput.value.trim()) ? myInput.value.trim() : "you";
@@ -3386,7 +3888,7 @@
   // Only attributes are touched, never DOM nodes.
   function syncCyberTags() {
     const mode = activeMode(currentSettings);
-    if (mode !== "cyber" && mode !== "skeuo" && mode !== "arcade" && mode !== "brutal") {
+    if (mode !== "cyber" && mode !== "skeuo" && mode !== "arcade" && mode !== "brutal" && mode !== "spooky") {
       document.querySelectorAll("[data-cy-title]").forEach((el) => el.removeAttribute("data-cy-title"));
       document.querySelectorAll("[data-cy-badge]").forEach((el) => el.removeAttribute("data-cy-badge"));
       return;
@@ -3565,6 +4067,7 @@
         : (mode === "skeuo" && useDefaultFont) ? "skeuo"
         : (mode === "arcade" && useDefaultFont) ? "arcade"
         : (mode === "brutal" && useDefaultFont) ? "brutal"
+        : (mode === "spooky" && useDefaultFont) ? "spooky"
         : (mode === "irc" && useDefaultFont) ? "jetbrains-mono"
         : currentSettings.fontFamily;
       ensureGoogleFont(fontKey);
@@ -3599,6 +4102,7 @@
     syncCyberTags();
     syncCyberOverlay();
     syncSkeuoOverlay();
+    syncSpookyOverlay();
   }
 
   function updateSettings(settings) {

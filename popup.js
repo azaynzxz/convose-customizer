@@ -146,7 +146,26 @@ const THEME_PRESETS = {
     bgColor: "#f4f1ea", sidebarColor: "#2b2b2b", cardColor: "#fffdf8", bubbleColor: "#ffffff",
     accentColor: "#111111", secondaryColor: "#c8f542", textColor: "#111111"
   },
-  // Arcade packs: bright 8-bit look (own style, no other chat style)
+  // Halloween packs
+  "blood-crypt": {
+    spookyMode: true, spookyBlood: true, brutalMode: false, arcadeMode: false, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#050204", sidebarColor: "#0b0407", cardColor: "#0d0508", bubbleColor: "#1b0a0e",
+    accentColor: "#c1121f", secondaryColor: "#5e0b15", textColor: "#ead9d2"
+  },  "haunted-night": {
+    spookyMode: true, brutalMode: false, arcadeMode: false, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#0d0614", sidebarColor: "#1a0b24", cardColor: "#20102c", bubbleColor: "#321a47",
+    accentColor: "#ff7a1a", secondaryColor: "#7a2fb8", textColor: "#f6e8d6"
+  },
+  "pumpkin-patch": {
+    spookyMode: true, brutalMode: false, arcadeMode: false, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#1a0e05", sidebarColor: "#2e1708", cardColor: "#261308", bubbleColor: "#4a2810",
+    accentColor: "#ff8c1a", secondaryColor: "#5f8a1c", textColor: "#fbe9cf"
+  },
+  "witch-brew": {
+    spookyMode: true, brutalMode: false, arcadeMode: false, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#07120b", sidebarColor: "#0f2216", cardColor: "#112619", bubbleColor: "#1d3b28",
+    accentColor: "#9bf03a", secondaryColor: "#6a2a9c", textColor: "#e4f5d8"
+  },  // Arcade packs: bright 8-bit look (own style, no other chat style)
   "sky-arcade": {
     arcadeMode: true, skeuoMode: false, cyberMode: false, ircMode: false,
     bgColor: "#5c94fc", sidebarColor: "#b5502b", cardColor: "#fff3c4", bubbleColor: "#ffffff",
@@ -206,6 +225,8 @@ const defaultSettings = {
   skeuoMode: false,
   arcadeMode: false,
   brutalMode: false,
+  spookyMode: false,
+  spookyBlood: false,
   cyberFx: true,
   bgColor: "#0a0a0a",
   sidebarColor: "#121212",
@@ -346,7 +367,7 @@ if (presetSelect) {
     const current = getCurrentSettingsFromInputs();
     current.themePreset = chosen;
     if (THEME_PRESETS[chosen]) {
-      Object.assign(current, { ircMode: false, cyberMode: false, skeuoMode: false, arcadeMode: false, brutalMode: false }, THEME_PRESETS[chosen]);
+      Object.assign(current, { ircMode: false, cyberMode: false, skeuoMode: false, arcadeMode: false, brutalMode: false, spookyMode: false, spookyBlood: false }, THEME_PRESETS[chosen]);
     }
     saveAndPush(current);
   });
@@ -359,7 +380,7 @@ presetChips.forEach((chip) => {
     if (!chosen || !THEME_PRESETS[chosen]) return;
     const current = getCurrentSettingsFromInputs();
     current.themePreset = chosen;
-    Object.assign(current, { ircMode: false, cyberMode: false, skeuoMode: false, arcadeMode: false, brutalMode: false }, THEME_PRESETS[chosen]);
+    Object.assign(current, { ircMode: false, cyberMode: false, skeuoMode: false, arcadeMode: false, brutalMode: false, spookyMode: false, spookyBlood: false }, THEME_PRESETS[chosen]);
     saveAndPush(current);
   });
 });
@@ -376,7 +397,7 @@ keys.forEach((key) => {
       updated.themePreset = "custom";
     }
     // IRC, Cyber and Skeuomorphic are three different chat looks: only one can be on
-    const modeKeys = ["ircMode", "cyberMode", "skeuoMode", "arcadeMode", "brutalMode"];
+    const modeKeys = ["ircMode", "cyberMode", "skeuoMode", "arcadeMode", "brutalMode", "spookyMode"];
     if (modeKeys.includes(key) && updated[key]) {
       modeKeys.forEach((k) => {
         if (k !== key) updated[k] = false;
