@@ -6,6 +6,8 @@
     hideSmartPrompts: false,
     ircMode: false,
     cyberMode: false,
+    skeuoMode: false,
+    arcadeMode: false,
     cyberFx: true,
     bgColor: "#0a0a0a",
     sidebarColor: "#121212",
@@ -36,10 +38,23 @@
     "space-grotesk": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap",
     "jetbrains-mono": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap",
     "lora": "https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap",
-    "cyber": "https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap"
+    "cyber": "https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap",
+    "skeuo": "https://fonts.googleapis.com/css2?family=Pacifico&display=swap",
+    "arcade": "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;700;800&display=swap"
   };
 
   const CYBER_HUD_ID = "convose-cyber-hud";
+  const SKEUO_DEFS_ID = "convose-skeuo-defs";
+  const SKEUO_FX_ID = "convose-skeuo-fx";
+
+  // Only one chat style can be active. Priority: skeuo > cyber > irc.
+  function activeMode(s) {
+    if (s.skeuoMode) return "skeuo";
+    if (s.arcadeMode) return "arcade";
+    if (s.cyberMode) return "cyber";
+    if (s.ircMode) return "irc";
+    return "";
+  }
 
   const CUSTOMIZER_STYLE_ID = "convose-customizer-styles";
   const FONT_LINK_ID = "convose-customizer-google-font";
@@ -485,7 +500,7 @@
       }
     ` : ""}
 
-    ${settings.ircMode && !settings.cyberMode ? `
+    ${activeMode(settings) === "irc" ? `
       /* =========================================================
          EXPERIMENTAL VIEW: Classic IRC Chat Style
          ========================================================= */
@@ -1019,7 +1034,11 @@
       }
     ` : ""}
 
-    ${settings.cyberMode ? buildCyberCss(settings, fontStack) : ""}
+    ${activeMode(settings) === "cyber" ? buildCyberCss(settings, fontStack) : ""}
+
+    ${activeMode(settings) === "skeuo" ? buildSkeuoCss(settings, fontStack) : ""}
+
+    ${activeMode(settings) === "arcade" ? buildArcadeCss(settings, fontStack) : ""}
   `;
   }
 
@@ -1081,6 +1100,7 @@
 
     const fillPartner = `color-mix(in srgb, ${BUB} 90%, ${A})`;
     const fillMine = `color-mix(in srgb, ${BUB} 84%, ${S})`;
+    const callPanel = `color-mix(in srgb, ${CARD} 90%, ${A})`;
     const bubCut = 9;
     const boxCut = 16;
 
@@ -1120,7 +1140,6 @@
         background-size: 80px 80px, 80px 80px, 80px 80px, 20px 20px, 20px 20px, 100% 100% !important;
         background-position: 0 0 !important;
         background-repeat: repeat, repeat, repeat, repeat, repeat, no-repeat !important;
-        background-attachment: fixed !important;
       }
 
       /* ---- Chat slots: chamfered HUD frame with corner brackets ---- */
@@ -1427,6 +1446,31 @@
         border-top: 1px solid ${dimA} !important;
       }
 
+      /* ---- Continuation rows (partner): bubble stays flush left, hover time moves to its right ----
+         Convose reserves a 33px left gutter (avatar column) and shows the hover time inside it.
+         Avatars are hidden here, so drop the gutter and put the time after the bubble. */
+      [data-msg-row]:not([data-irc-mine="true"]) .pl-\\[33px\\] {
+        padding-left: 0 !important;
+      }
+
+      [data-msg-row]:not([data-irc-mine="true"]) span.invisible.absolute.right-full {
+        position: static !important;
+        inset: auto !important;
+        order: 1 !important;
+        flex: 0 0 auto !important;
+        align-self: center !important;
+        margin: 0 8px 0 10px !important;
+        white-space: nowrap !important;
+        font-family: ${mono} !important;
+        font-size: 10px !important;
+        letter-spacing: 0.1em !important;
+        color: ${mix(T, 50)} !important;
+      }
+
+      [data-msg-row]:not([data-irc-mine="true"]) [data-msg-actions] {
+        order: 2 !important;
+      }
+
       /* ---- Audio messages: segmented HUD player ---- */
       [data-msg-bubble="true"][data-message-type="audio"] [data-msg-fill],
       [data-msg-bubble="true"][data-message-type="audio"] [data-msg-transcript] {
@@ -1441,6 +1485,29 @@
 
       [data-msg-bubble="true"] .group\\/player {
         font-family: ${mono} !important;
+      }
+
+      [data-msg-bubble="true"] {
+        --msg-reply-text-color: ${INK} !important;
+      }
+
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] {
+        --msg-reply-text-color: #ffffff !important;
+      }
+
+      [data-msg-bubble="true"] [data-msg-transcript],
+      [data-msg-bubble="true"] [data-msg-transcript] *,
+      [data-msg-bubble="true"] .text-msg-reply-text-color,
+      [data-msg-bubble="true"] .text-msg-reply-text-color * {
+        color: ${INK} !important;
+        text-shadow: none !important;
+      }
+
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] [data-msg-transcript],
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] [data-msg-transcript] *,
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] .text-msg-reply-text-color,
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] .text-msg-reply-text-color * {
+        color: #ffffff !important;
       }
 
       .audio-seek {
@@ -1621,6 +1688,87 @@
         border-radius: 0 !important;
       }
 
+      /* ---- Call section: replace Convose's grey panel, green banner and pill buttons ---- */
+      :root,
+      :host,
+      html,
+      html[data-theme="dark"],
+      html[data-theme="light"] {
+        --call-screen-inchat-bg: ${callPanel} !important;
+        --color-call-screen-inchat-bg: ${callPanel} !important;
+        --full-screen-call-bg: ${BG} !important;
+        --full-screen-call-header-bg: ${CARD} !important;
+        --call-screen-overlay-bg: ${BG} !important;
+        --mask-overlay-call-screen-bg: ${mix(BG, 88)} !important;
+        --btn-call-group-hover-bg: ${mix(A, 14)} !important;
+        --btn-start-quick-group-call-bg: ${mix(A, 14)} !important;
+        --inchat-call-shadow: 0 0 0 1px ${dimA} !important;
+        --inchat-call-one-to-one-shadow: 0 0 0 1px ${dimA} !important;
+      }
+
+      .bg-call-screen-inchat-bg,
+      .dark\\:bg-call-screen-inchat-bg {
+        background: linear-gradient(0deg, ${faintA}, transparent 70%), ${callPanel} !important;
+        border-radius: 0 !important;
+        box-shadow: 0 0 0 1px ${dimA}, inset 0 1px 0 ${mix(A, 45)} !important;
+      }
+
+      .bg-call-screen-inchat-bg *,
+      .dark\\:bg-call-screen-inchat-bg * {
+        font-family: ${mono} !important;
+        letter-spacing: 0.06em;
+      }
+
+      /* Green status banner ("Connecting ...", join / in-call strips): outlined secondary colour */
+      .bg-\\[\\#599C66\\]:not(.rounded-full):not([class*="size-"]),
+      [class*="bg-[#599c66" i]:not(.rounded-full):not([class*="size-"]) {
+        background: linear-gradient(${mix(S, 14)}, ${mix(S, 14)}), ${CARD} !important;
+        border: 1px solid ${lineS} !important;
+        border-radius: 0 !important;
+        color: ${S} !important;
+        font-family: ${mono} !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.14em !important;
+        ${fx ? `box-shadow: inset 0 0 18px -8px ${mix(S, 60)} !important;` : ""}
+      }
+
+      .bg-\\[\\#599C66\\]:not(.rounded-full):not([class*="size-"]) *,
+      [class*="bg-[#599c66" i]:not(.rounded-full):not([class*="size-"]) * {
+        color: ${S} !important;
+        font-family: ${mono} !important;
+      }
+
+      .text-\\[\\#599c66\\] { color: ${S} !important; }
+      .border-\\[\\#599C66\\] { border-color: ${S} !important; }
+
+      /* Round pill control buttons (screen share, camera, fullscreen, next ...): angled outline */
+      [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]) {
+        border-radius: 0 !important;
+        border-color: ${lineA} !important;
+        background-color: ${mix(A, 8)} !important;
+        color: ${A} !important;
+      }
+
+      [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]):hover {
+        background-color: ${mix(A, 18)} !important;
+        border-color: ${A} !important;
+      }
+
+      /* Red mute / hang-up buttons: keep red, angled outline */
+      [data-chatbox] button[class*="bg-[#C54445" i],
+      [data-chatbox] button[class*="bg-[#e5484d" i] {
+        border-radius: 0 !important;
+        background-color: color-mix(in srgb, #ff3b5c 20%, ${CARD}) !important;
+        border: 1px solid #ff3b5c !important;
+        color: #ff3b5c !important;
+      }
+
+      [data-chatbox] button[class*="bg-[#C54445" i] svg *,
+      [data-chatbox] button[class*="bg-[#e5484d" i] svg * {
+        fill: #ff3b5c !important;
+        stroke: #ff3b5c !important;
+      }
+
       /* ---- Scrollbars ---- */
       *::-webkit-scrollbar { width: 6px; height: 6px; }
       *::-webkit-scrollbar-thumb { background-color: ${mix(A, 45)} !important; border-radius: 0 !important; }
@@ -1706,6 +1854,1018 @@
     `;
   }
 
+  /* =============================================================
+     SKEUOMORPHIC STYLE: wood, denim, leather, paper, glossy buttons
+     Palette mapping:
+       bgColor = wood tint, sidebarColor = denim, cardColor = paper,
+       bubbleColor = partner bubble paper, accentColor = glossy highlight,
+       secondaryColor = own bubble, textColor = ink on paper
+     ============================================================= */
+
+  function buildSkeuoCss(settings, fontStack) {
+    const BG = settings.bgColor;
+    const SIDE = settings.sidebarColor;
+    const PAPER = settings.cardColor;
+    const PB = settings.bubbleColor;
+    const A = settings.accentColor;
+    const S = settings.secondaryColor || "#5cb85c";
+    const INK = settings.textColor;
+    const fx = settings.cyberFx !== false;
+
+    const cream = "#f4ead2";
+    const tone = (c, w) => `color-mix(in srgb, ${c}, white ${w}%)`;
+    const shade = (c, b) => `color-mix(in srgb, ${c}, black ${b}%)`;
+    const rgba = (c, pct) => `color-mix(in srgb, ${c} ${pct}%, transparent)`;
+    // Glossy "split highlight" gradient (the classic top-half shine)
+    const gloss = (c) => `linear-gradient(180deg, ${tone(c, 42)} 0%, ${tone(c, 12)} 49%, ${shade(c, 4)} 50%, ${shade(c, 18)} 100%)`;
+    const metal = "linear-gradient(180deg, #f7f8f9 0%, #dcdfe2 48%, #b9bdc2 50%, #cfd2d6 100%)";
+    const font = fontStack || `"Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif`;
+
+    const gridSlot = `[data-component="suggestions-grid"] > div:not(.fixed) > div.relative.block.size-full > div[data-chat-id]`;
+    const callDark = shade(SIDE, 55);
+
+    return `
+      /* =========================================================
+         SKEUOMORPHIC STYLE: wood desk, denim rail, leather header, paper chat
+         ========================================================= */
+
+      :root,
+      :host,
+      html,
+      html[data-theme="dark"],
+      html[data-theme="light"] {
+        --call-screen-inchat-bg: ${callDark} !important;
+        --color-call-screen-inchat-bg: ${callDark} !important;
+        --full-screen-call-bg: ${shade(BG, 35)} !important;
+        --full-screen-call-header-bg: ${shade(SIDE, 40)} !important;
+        --call-screen-overlay-bg: ${shade(BG, 35)} !important;
+        --mask-overlay-call-screen-bg: ${rgba(shade(BG, 50), 85)} !important;
+        --btn-call-group-hover-bg: ${rgba("#ffffff", 14)} !important;
+        --inchat-call-shadow: 0 3px 8px rgba(0, 0, 0, 0.55) !important;
+        --inchat-call-one-to-one-shadow: 0 3px 8px rgba(0, 0, 0, 0.55) !important;
+        --card-header-in-call-bg: ${callDark} !important;
+      }
+
+      /* ---- Desk: dark wood with plank seams ---- */
+      html {
+        background-color: ${BG} !important;
+      }
+
+      body,
+      [data-component="suggestions-grid"] {
+        background-color: ${BG} !important;
+        background-image:
+          radial-gradient(ellipse at 50% 25%, rgba(255, 255, 255, 0.10), transparent 62%),
+          repeating-linear-gradient(90deg, ${shade(BG, 30)} 0 2px, ${tone(BG, 8)} 2px 3px, transparent 3px 190px) !important;
+      }
+
+      [data-component="suggestions-grid"]:not(.fixed):not(.absolute) {
+        position: relative !important;
+      }
+
+      /* Keep the chat canvas above the desk seams (they are the last child of the grid) */
+      [data-component="suggestions-grid"] > div:not(.fixed) {
+        position: relative;
+        z-index: 1;
+      }
+
+      [data-component="suggestions-grid"]::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-color: ${BG};
+        ${fx ? `background-image:
+          repeating-linear-gradient(90deg, ${shade(BG, 14)} 0 1px, transparent 1px 7px, ${tone(BG, 5)} 7px 8px, transparent 8px 19px),
+          repeating-linear-gradient(90deg, transparent 0 53px, ${shade(BG, 22)} 53px 55px, transparent 55px 131px),
+          linear-gradient(180deg, ${tone(BG, 6)}, transparent 40%, ${shade(BG, 12)});` : ""}
+      }
+
+      [data-component="suggestions-grid"]::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background:
+          repeating-linear-gradient(90deg, transparent 0 238px, rgba(0, 0, 0, 0.5) 238px 240px, rgba(255, 255, 255, 0.07) 240px 241px),
+          radial-gradient(ellipse at 50% 40%, transparent 45%, rgba(0, 0, 0, 0.5) 100%);
+      }
+
+      /* ---- Chat cards: paper in a stitched frame, floating above the desk ---- */
+      ${gridSlot} {
+        border-radius: 10px !important;
+        border-color: transparent !important;
+        background: ${PAPER} !important;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 10px 22px rgba(0, 0, 0, 0.6) !important;
+      }
+
+      ${gridSlot}.bg-modal-input-border-focus-color {
+        background: ${PAPER} !important;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7), 0 0 0 3px ${rgba(A, 85)}, 0 0 16px 2px ${rgba(A, 55)}, 0 10px 22px rgba(0, 0, 0, 0.6) !important;
+      }
+
+      [data-chatbox],
+      [data-chatbox] > div,
+      [data-chatbox] > div > div {
+        border-radius: 10px !important;
+      }
+
+      [data-chatbox],
+      [data-chatbox] * {
+        font-family: ${font};
+      }
+
+      /* ---- Header: black leather strip with stitching ---- */
+      [data-chatbox] [data-component="group-card-header"],
+      [data-chatbox] header {
+        position: relative !important;
+        isolation: isolate;
+        border-radius: 9px 9px 0 0 !important;
+        border-bottom: none !important;
+        background: #232120 !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -3px 4px rgba(0, 0, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.45) !important;
+      }
+
+      [data-chatbox] [data-component="group-card-header"]::before,
+      [data-chatbox] header::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        background-color: #232120;
+        ${fx ? `background-image:
+          radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.10) 0 1px, transparent 1.6px),
+          radial-gradient(circle at 70% 70%, rgba(0, 0, 0, 0.35) 0 1px, transparent 1.6px);
+        background-size: 5px 5px, 5px 5px;
+        background-position: 0 0, 2px 2px;` : ""}
+      }
+
+      [data-chatbox] header::after {
+        content: "";
+        position: absolute;
+        left: 9px;
+        right: 9px;
+        bottom: 4px;
+        z-index: 1;
+        pointer-events: none;
+        border-bottom: 1.5px dashed rgba(240, 226, 190, 0.55);
+      }
+
+      [data-chatbox] header > * {
+        z-index: 2;
+      }
+
+      [data-chatbox] [data-component="group-card-header"] p,
+      [data-chatbox] header [data-cy-title] {
+        display: inline-block !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        letter-spacing: 0 !important;
+        text-transform: none !important;
+        color: ${cream} !important;
+        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.9) !important;
+      }
+
+      [data-chatbox] header :has(> [data-cy-title]),
+      [data-chatbox] header :has(> p) {
+        min-width: 0 !important;
+      }
+
+      [data-chatbox] header button,
+      [data-chatbox] header svg {
+        color: ${cream} !important;
+      }
+
+      [data-chatbox] header svg {
+        filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.9));
+      }
+
+      [data-chatbox] header img {
+        border-radius: 50% !important;
+        box-shadow: 0 0 0 2px #e9ddc0, 0 1px 3px #000 !important;
+      }
+
+      /* ---- Message list: warm paper with fine weave and top light ---- */
+      [data-chatbox] .bg-chat-message-list-bg,
+      [data-chatbox] .bg-group-card-chat-screen-bg {
+        background:
+          radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.38), transparent 65%),
+          repeating-linear-gradient(0deg, rgba(110, 80, 30, 0.04) 0 1px, transparent 1px 3px),
+          repeating-linear-gradient(90deg, rgba(110, 80, 30, 0.035) 0 1px, transparent 1px 3px),
+          ${PAPER} !important;
+        box-shadow: inset 0 7px 8px -6px rgba(0, 0, 0, 0.5), inset 0 -5px 7px -6px rgba(0, 0, 0, 0.3);
+      }
+
+      /* Text that Convose draws in white must stay readable on paper */
+      [data-chatbox] .bg-chat-message-list-bg .text-white,
+      [data-chatbox] .bg-chat-message-list-bg .dark\\:text-white,
+      [data-chatbox] .bg-group-card-chat-screen-bg .text-white,
+      [data-chatbox] .bg-group-card-chat-screen-bg .dark\\:text-white {
+        color: ${INK} !important;
+      }
+
+      /* ---- Rows: avatars hidden, tag line moves into the bubble ---- */
+      [data-msg-row] > div.mt-\\[4px\\].h-\\[16px\\],
+      [data-msg-row] img.size-\\[30px\\],
+      [data-msg-row] > div > div.flex.items-baseline.gap-\\[6px\\],
+      [data-msg-row] > div > p.block.w-fit.text-left.text-\\[11px\\].font-bold {
+        display: none !important;
+      }
+
+      [data-msg-row] {
+        margin-top: 3px !important;
+      }
+
+      [data-msg-row]:not([data-irc-mine="true"]) .pl-\\[33px\\] {
+        padding-left: 0 !important;
+      }
+
+      [data-msg-row]:not([data-irc-mine="true"]) span.invisible.absolute.right-full {
+        position: static !important;
+        inset: auto !important;
+        order: 1 !important;
+        flex: 0 0 auto !important;
+        align-self: center !important;
+        margin: 0 8px 0 10px !important;
+        white-space: nowrap !important;
+        font-size: 10px !important;
+        font-weight: 700 !important;
+        color: ${rgba(INK, 55)} !important;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+      }
+
+      [data-msg-row]:not([data-irc-mine="true"]) [data-msg-actions] {
+        order: 2 !important;
+      }
+
+      /* ---- Bubbles: paper (others) and glossy colour (you) ---- */
+      [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+        position: relative !important;
+        display: block !important;
+        border-radius: 16px !important;
+        outline: none !important;
+        font-family: ${font} !important;
+        border: 1px solid ${shade(PB, 34)} !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 2px rgba(0, 0, 0, 0.32) !important;
+      }
+
+      [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="image"]):not([data-message-type="intro"]) {
+        background-image: linear-gradient(180deg, ${tone(PB, 55)} 0%, ${PB} 55%, ${shade(PB, 7)} 100%) !important;
+        max-width: min(100%, 560px) !important;
+      }
+
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+        border-color: ${shade(S, 42)} !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.42) !important;
+      }
+
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="image"]):not([data-message-type="intro"]) {
+        background-image: ${gloss(S)} !important;
+      }
+
+      [data-msg-row]:hover [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+        filter: brightness(1.05) !important;
+      }
+
+      /* Tag line inside the first bubble of a speaker block */
+      [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before {
+        content: attr(data-cy-nick) "   " attr(data-cy-time);
+        display: block;
+        padding: 6px 13px 0 13px;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+        color: ${rgba(INK, 58)};
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+      }
+
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before {
+        color: rgba(255, 255, 255, 0.82);
+        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35);
+      }
+
+      [data-msg-row] [data-msg-bubble="true"] > div.block {
+        padding: 6px 13px 7px 13px !important;
+        font-family: ${font} !important;
+        font-size: 14.5px !important;
+        font-weight: 500 !important;
+        line-height: 1.25 !important;
+        letter-spacing: 0 !important;
+        color: ${INK} !important;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+      }
+
+      [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"] > div.block {
+        padding-top: 3px !important;
+      }
+
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block,
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block span {
+        color: #ffffff !important;
+        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+      }
+
+      [data-msg-row] [data-msg-bubble="true"] .Linkify,
+      [data-msg-row] [data-msg-bubble="true"] span {
+        font-family: ${font} !important;
+      }
+
+      [data-msg-row] [data-msg-bubble="true"] a {
+        color: ${shade(A, 10)} !important;
+        text-decoration: underline !important;
+      }
+
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] a {
+        color: #ffffff !important;
+      }
+
+      [data-msg-row] [data-msg-bubble="true"] > span.absolute {
+        color: ${rgba(INK, 50)} !important;
+      }
+
+      [data-msg-bubble="true"] > div.flex.max-w-full.flex-col.overflow-hidden {
+        border-radius: 10px !important;
+        margin: 2px 6px 6px !important;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+      }
+
+      /* ---- Voice notes ---- */
+      [data-msg-bubble="true"][data-message-type="audio"] [data-msg-fill],
+      [data-msg-bubble="true"][data-message-type="audio"] [data-msg-transcript] {
+        border-radius: 0 !important;
+        background-image: none !important;
+        background-color: transparent !important;
+      }
+
+      [data-msg-bubble="true"][data-message-type="audio"] [data-msg-transcript] {
+        border-top: 1px solid rgba(0, 0, 0, 0.14) !important;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset !important;
+        color: ${INK} !important;
+      }
+
+      .audio-seek {
+        --audio-fill: ${A} !important;
+        --audio-rest: rgba(0, 0, 0, 0.22) !important;
+      }
+
+      [data-msg-row][data-irc-mine="true"] .audio-seek {
+        --audio-fill: #ffffff !important;
+        --audio-rest: rgba(0, 0, 0, 0.28) !important;
+      }
+
+      /* ---- Replies and reactions ---- */
+      [data-component="chat-message-reply"] > div.mt-\\[5px\\],
+      [data-component="chat-message-reply"] > div.mt-\\[5px\\] * {
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        color: ${rgba(INK, 62)} !important;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+      }
+
+      [data-component="chat-message-reply"] > div.bg-msg-bubble-reply-bg {
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.05)) !important;
+        border: 1px solid rgba(0, 0, 0, 0.2) !important;
+        border-left: 4px solid ${A} !important;
+        border-radius: 7px !important;
+        box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.22), 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+        color: ${INK} !important;
+        font-size: 12px !important;
+      }
+
+      [data-msg-reactions],
+      .bg-buble-reaction-bg {
+        background: linear-gradient(180deg, #ffffff, ${shade(PB, 6)}) !important;
+        border: 1px solid ${shade(PB, 36)} !important;
+        border-radius: 12px !important;
+        box-shadow: inset 0 1px 0 #ffffff, 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+        color: ${INK} !important;
+      }
+
+      .bg-buble-reacted-bg,
+      [data-msg-reactions].bg-buble-reacted-bg {
+        background: ${gloss(A)} !important;
+        border-color: ${shade(A, 40)} !important;
+        color: #ffffff !important;
+      }
+
+      /* ---- Input bar: tan toolbar with a recessed text field ---- */
+      [data-component="chat-input"] {
+        background: linear-gradient(180deg, ${tone(PAPER, 30)} 0%, ${shade(PAPER, 14)} 100%) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 -1px 0 rgba(0, 0, 0, 0.35) !important;
+      }
+
+      [data-component="chat-input"] .bg-input-text-msg-form {
+        background: linear-gradient(180deg, ${shade(PB, 4)}, ${tone(PB, 60)}) !important;
+        border: 1px solid ${shade(PAPER, 45)} !important;
+        border-radius: 15px !important;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+      }
+
+      [data-component="chat-input"] textarea,
+      [data-component="chat-input"] input,
+      [data-component="chat-input"] [contenteditable] {
+        color: ${INK} !important;
+        caret-color: ${A} !important;
+        font-family: ${font} !important;
+      }
+
+      [data-component="chat-input"] ::placeholder {
+        color: ${rgba(INK, 45)} !important;
+        opacity: 1 !important;
+      }
+
+      [data-component="chat-input"] svg {
+        color: ${shade(PAPER, 62)} !important;
+        filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.7));
+      }
+
+      .group\\/smart > div > div {
+        background: linear-gradient(180deg, #ffffff, ${shade(PB, 8)}) !important;
+        border: 1px solid ${shade(PB, 36)} !important;
+        border-radius: 13px !important;
+        box-shadow: inset 0 1px 0 #ffffff, 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+        color: ${INK} !important;
+      }
+
+      /* ---- Glossy accent buttons (primary / call / mic) ---- */
+      .bg-primary,
+      .bg-start-quick-call-btn-bg,
+      [data-component="group-call-banner"],
+      [data-component="mic-button"].bg-\\[\\#5865f2\\],
+      .bg-\\[\\#5865f2\\] {
+        background-color: ${A} !important;
+        background-image: ${gloss(A)} !important;
+        border: 1px solid ${shade(A, 42)} !important;
+        border-radius: 14px !important;
+        color: #ffffff !important;
+        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.45);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+      }
+
+      /* ---- Sidebar: denim fabric, stitched edge, debossed rows ---- */
+      .group\\/sidebar,
+      aside[data-component="sidebar"] {
+        background-color: ${SIDE} !important;
+        background-image:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(0, 0, 0, 0.28)),
+          repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 3px),
+          repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.11) 0 1px, transparent 1px 3px) !important;
+        border-right: 1px solid #000 !important;
+        box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.12), 7px 0 16px rgba(0, 0, 0, 0.6) !important;
+      }
+
+      .group\\/sidebar::after {
+        content: "";
+        position: absolute;
+        top: 6px;
+        bottom: 6px;
+        right: 6px;
+        pointer-events: none;
+        border-right: 2px dashed rgba(240, 226, 190, 0.34);
+      }
+
+      aside[data-component="sidebar"] {
+        color: ${cream};
+        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.65);
+      }
+
+      aside[data-component="sidebar"] * {
+        font-family: ${font} !important;
+      }
+
+      /* Bright, readable sidebar text (beats the base text colour rule) */
+      html aside[data-component="sidebar"] article.group\\/row.group\\/row span,
+      html aside[data-component="sidebar"] article.group\\/row.group\\/row div,
+      html aside[data-component="sidebar"] article.group\\/row.group\\/row p,
+      html aside[data-component="sidebar"] [data-interest-chip] span,
+      html aside[data-component="sidebar"] [data-interest-chip] div {
+        color: #fff6dc !important;
+      }
+
+      html aside[data-component="sidebar"] article.group\\/row.group\\/row .text-\\[14px\\].font-bold {
+        color: #ffffff !important;
+        font-weight: 700 !important;
+      }
+
+      aside[data-component="sidebar"] > div.-mb-0\\.5.mt-1\\.5 > p,
+      aside[data-component="sidebar"] section > div.-mb-0\\.5 > span {
+        text-transform: uppercase !important;
+        letter-spacing: 0.1em !important;
+        font-size: 10.5px !important;
+        font-weight: 700 !important;
+        color: rgba(240, 226, 190, 0.7) !important;
+      }
+
+      aside[data-component="sidebar"] article.group\\/row,
+      aside[data-component="sidebar"] [data-interest-chip],
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a {
+        border-radius: 9px !important;
+        background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.15)) !important;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(0, 0, 0, 0.28), 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+      }
+
+      aside[data-component="sidebar"] article.group\\/row:hover,
+      aside[data-component="sidebar"] [data-interest-chip]:hover,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button:hover,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a:hover {
+        background-image: ${gloss(A)} !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 3px rgba(0, 0, 0, 0.55) !important;
+      }
+
+      aside[data-component="sidebar"] article.group\\/row:hover *,
+      aside[data-component="sidebar"] [data-interest-chip]:hover * {
+        color: #ffffff !important;
+      }
+
+      /* Metal pill buttons (+ Add interests, Upgrade) */
+      aside[data-component="sidebar"] [data-component="add-interest-input"],
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a) {
+        background-color: #c5c8cc !important;
+        background-image: ${metal} !important;
+        border: 1px solid #5c6065 !important;
+        border-radius: 18px !important;
+        box-shadow: inset 0 1px 0 #ffffff, 0 2px 3px rgba(0, 0, 0, 0.55) !important;
+      }
+
+      aside[data-component="sidebar"] [data-component="add-interest-input"],
+      aside[data-component="sidebar"] [data-component="add-interest-input"] *,
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a),
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a) * {
+        color: #1d2024 !important;
+        font-weight: 700 !important;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) !important;
+      }
+
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 {
+        background-color: ${shade(SIDE, 35)} !important;
+        border-top: 1px solid rgba(0, 0, 0, 0.7) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14) !important;
+        border-radius: 0 !important;
+      }
+
+      /* ---- Unread badge: glossy red ---- */
+      aside[data-component="sidebar"] [data-cy-badge] {
+        background-color: #d93a3a !important;
+        background-image: ${gloss("#e04848")} !important;
+        border: 1px solid #8e1f1f !important;
+        border-radius: 50% !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 2px rgba(0, 0, 0, 0.6) !important;
+      }
+
+      /* ---- Call section: leather panel, glossy green banner, metal and red buttons ---- */
+      .bg-call-screen-inchat-bg,
+      .dark\\:bg-call-screen-inchat-bg {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.25)), ${callDark} !important;
+        border-radius: 10px !important;
+        box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+      }
+
+      .bg-call-screen-inchat-bg *,
+      .dark\\:bg-call-screen-inchat-bg * {
+        font-family: ${font} !important;
+        color: ${cream};
+      }
+
+      .bg-\\[\\#599C66\\]:not(.rounded-full):not([class*="size-"]),
+      [class*="bg-[#599c66" i]:not(.rounded-full):not([class*="size-"]) {
+        background-color: #4a9a52 !important;
+        background-image: ${gloss("#5cb85c")} !important;
+        border: 1px solid #2f6a35 !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.45) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 1px 3px rgba(0, 0, 0, 0.5) !important;
+      }
+
+      .bg-\\[\\#599C66\\]:not(.rounded-full):not([class*="size-"]) *,
+      [class*="bg-[#599c66" i]:not(.rounded-full):not([class*="size-"]) * {
+        color: #ffffff !important;
+      }
+
+      .text-\\[\\#599c66\\] { color: ${shade(S, 20)} !important; }
+      .border-\\[\\#599C66\\] { border-color: ${shade(S, 25)} !important; }
+
+      [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]) {
+        background-color: #c5c8cc !important;
+        background-image: ${metal} !important;
+        border: 1px solid #5c6065 !important;
+        border-radius: 18px !important;
+        color: #2a2d31 !important;
+        box-shadow: inset 0 1px 0 #ffffff, 0 2px 3px rgba(0, 0, 0, 0.55) !important;
+      }
+
+      [data-chatbox] button[class*="bg-[#C54445" i],
+      [data-chatbox] button[class*="bg-[#e5484d" i] {
+        background-color: #c23a3a !important;
+        background-image: ${gloss("#d9483f")} !important;
+        border: 1px solid #7f1f1f !important;
+        border-radius: 18px !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 2px 3px rgba(0, 0, 0, 0.55) !important;
+      }
+
+      /* ---- Scrollbars: dark leather thumb on an inset track ---- */
+      html::-webkit-scrollbar, [data-chatbox] *::-webkit-scrollbar, aside[data-component="sidebar"] *::-webkit-scrollbar { width: 11px; height: 11px; }
+      html::-webkit-scrollbar-track, [data-chatbox] *::-webkit-scrollbar-track, aside[data-component="sidebar"] *::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.22) !important; border-radius: 6px; }
+      html::-webkit-scrollbar-thumb, [data-chatbox] *::-webkit-scrollbar-thumb, aside[data-component="sidebar"] *::-webkit-scrollbar-thumb {
+        background: linear-gradient(90deg, #7a766f, #3d3a36) !important;
+        border: 1px solid #1c1a18;
+        border-radius: 6px !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      }
+
+      /* ---- Overlay: fine grain, vignette, hanging denim tab ---- */
+      #${SKEUO_FX_ID} {
+        position: fixed;
+        inset: 0;
+        z-index: 2147482999;
+        pointer-events: none;
+      }
+
+      #${SKEUO_FX_ID} .sk-noise {
+        position: absolute;
+        inset: 0;
+        display: none;
+      }
+
+      #${SKEUO_FX_ID} .sk-vig {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 50% 45%, transparent 62%, rgba(0, 0, 0, 0.28) 100%);
+      }
+
+      #${SKEUO_FX_ID} .sk-tab {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 1px 22px 3px;
+        border-radius: 0 0 10px 10px;
+        background-color: ${SIDE};
+        background-image:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.3)),
+          repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 3px),
+          repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 3px);
+        border: 1px solid #000;
+        border-top: none;
+        box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.15), 0 3px 6px rgba(0, 0, 0, 0.55);
+        font-family: "Pacifico", "Brush Script MT", cursive;
+        font-size: 12px;
+        line-height: 16px;
+        color: ${cream};
+        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.8);
+      }
+
+      #${SKEUO_FX_ID} .sk-tab::after {
+        content: "";
+        position: absolute;
+        left: 6px;
+        right: 6px;
+        bottom: 2px;
+        border-bottom: 1.5px dashed rgba(240, 226, 190, 0.45);
+      }
+    `;
+  }
+
+  function hexToRgb01(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
+    const h = m ? m[1] : "4a2c19";
+    return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  }
+
+  /* =============================================================
+     ARCADE STYLE (settings.arcadeMode): bright 8-bit game look.
+     Built on the skeuo layout rules (same hooks) with textures switched off,
+     then flattened: thick black outlines, hard offset shadows, brick-block
+     sidebar, sky desk, chunky yellow buttons, pixel-font labels.
+     Palette: bgColor = sky, sidebarColor = brick, cardColor = cream panel,
+     bubbleColor = other bubbles, accentColor = gold, secondaryColor = own bubbles,
+     textColor = ink. No characters, logos or game art are used.
+     ============================================================= */
+
+  function buildArcadeCss(settings, fontStack) {
+    const BG = settings.bgColor;
+    const SIDE = settings.sidebarColor;
+    const PAPER = settings.cardColor;
+    const PB = settings.bubbleColor;
+    const A = settings.accentColor;
+    const S = settings.secondaryColor || "#e52521";
+    const INK = settings.textColor;
+    const K = "#1a1a1a";
+    const px = `"Press Start 2P", "Courier New", monospace`;
+    const body = fontStack || `"Nunito", "Segoe UI", Arial, sans-serif`;
+    const shade = (c, b) => `color-mix(in srgb, ${c}, black ${b}%)`;
+    const gridSlot = `[data-component="suggestions-grid"] > div:not(.fixed) > div.relative.block.size-full > div[data-chat-id]`;
+    const pill = `html [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]),
+      aside[data-component="sidebar"] [data-component="add-interest-input"],
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a)`;
+
+    const base = buildSkeuoCss({ ...settings, cyberFx: false }, body);
+
+    return base + `
+      /* ===== Arcade layer: flatten the skeuo look into chunky 8-bit panels ===== */
+
+      html body,
+      [data-component="suggestions-grid"] {
+        background-image:
+          repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.10) 0 14px, transparent 14px 28px) !important;
+      }
+
+      [data-component="suggestions-grid"]::before,
+      [data-component="suggestions-grid"]::after { display: none !important; }
+
+      ${gridSlot} {
+        border-radius: 8px !important;
+        box-shadow: 0 0 0 4px ${K}, 7px 7px 0 4px rgba(0, 0, 0, 0.35) !important;
+      }
+
+      ${gridSlot}.bg-modal-input-border-focus-color {
+        box-shadow: 0 0 0 4px ${K}, 0 0 0 8px ${A}, 0 0 0 11px ${K}, 7px 7px 0 11px rgba(0, 0, 0, 0.35) !important;
+      }
+
+      /* Header: gold strip */
+      html [data-chatbox] [data-component="group-card-header"],
+      html [data-chatbox] header {
+        background: ${A} !important;
+        border-bottom: 4px solid ${K} !important;
+        box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.16) !important;
+        border-radius: 6px 6px 0 0 !important;
+      }
+
+      [data-chatbox] [data-component="group-card-header"]::before,
+      [data-chatbox] header::before {
+        background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0 8px, transparent 8px 16px) !important;
+      }
+
+      [data-chatbox] header::after { display: none !important; }
+
+      html [data-chatbox] [data-component="group-card-header"] p,
+      html [data-chatbox] header [data-cy-title] {
+        font-family: ${px} !important;
+        font-size: 10px !important;
+        font-weight: 400 !important;
+        line-height: 1.6 !important;
+        letter-spacing: 0 !important;
+        color: ${K} !important;
+        text-shadow: none !important;
+      }
+
+      html [data-chatbox] header button,
+      html [data-chatbox] header svg { color: ${K} !important; filter: none !important; }
+
+      html [data-chatbox] header img {
+        border-radius: 4px !important;
+        box-shadow: 0 0 0 3px ${K} !important;
+      }
+
+      /* Message area: cream panel with a faint dot grid */
+      [data-chatbox] .bg-chat-message-list-bg,
+      [data-chatbox] .bg-group-card-chat-screen-bg {
+        background:
+          radial-gradient(rgba(0, 0, 0, 0.07) 1.5px, transparent 1.7px) 0 0 / 16px 16px,
+          ${PAPER} !important;
+        box-shadow: none !important;
+      }
+
+      /* Bubbles: flat colour, thick outline, hard shadow */
+      html [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+        border: 3px solid ${K} !important;
+        border-radius: 8px !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+        background-image: none !important;
+        background-color: ${PB} !important;
+        filter: none !important;
+      }
+
+      html [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="image"]):not([data-message-type="intro"]),
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="image"]):not([data-message-type="intro"]) {
+        background-image: none !important;
+      }
+
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+        background-color: ${S} !important;
+        border-color: ${K} !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+      }
+
+      html [data-msg-row] [data-msg-bubble="true"] > div.block {
+        font-family: ${body} !important;
+        font-weight: 700 !important;
+        text-shadow: none !important;
+      }
+
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block,
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block span {
+        text-shadow: 1px 1px 0 ${K} !important;
+      }
+
+      html [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before {
+        font-family: ${px};
+        font-size: 7px;
+        line-height: 1.4;
+        padding-top: 8px;
+        color: ${K};
+        text-shadow: none;
+        opacity: 0.75;
+      }
+
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before {
+        color: #ffffff;
+        text-shadow: 1px 1px 0 ${K};
+        opacity: 1;
+      }
+
+      /* Sidebar: brick-block wall */
+      html aside[data-component="sidebar"] {
+        background-image:
+          linear-gradient(0deg, rgba(0, 0, 0, 0.35) 2px, transparent 2px),
+          conic-gradient(rgba(255, 255, 255, 0.08) 25%, transparent 0 50%, rgba(255, 255, 255, 0.08) 0 75%, transparent 0) !important;
+        background-size: 100% 16px, 32px 32px !important;
+        border-right: 4px solid ${K} !important;
+      }
+
+      html aside[data-component="sidebar"] {
+        text-shadow: 1px 1px 0 ${K};
+      }
+
+      aside[data-component="sidebar"] article.group\\/row,
+      aside[data-component="sidebar"] [data-interest-chip],
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a {
+        background-image: none !important;
+        background-color: ${shade(SIDE, 40)} !important;
+        border: 3px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+      }
+
+      aside[data-component="sidebar"] article.group\\/row:hover,
+      aside[data-component="sidebar"] [data-interest-chip]:hover,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button:hover,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a:hover {
+        background-image: none !important;
+        background-color: ${A} !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+      }
+
+      html aside[data-component="sidebar"] article.group\\/row.group\\/row:hover :is(span, div, p),
+      html aside[data-component="sidebar"] [data-interest-chip]:hover :is(span, div),
+      html aside[data-component="sidebar"] > div.mb-\\[7px\\] > :is(button, a):hover,
+      html aside[data-component="sidebar"] > div.mb-\\[7px\\] > :is(button, a):hover * {
+        color: ${K} !important;
+        text-shadow: none !important;
+      }
+
+      aside[data-component="sidebar"] > div.-mb-0\\.5.mt-1\\.5 > p,
+      aside[data-component="sidebar"] section > div.-mb-0\\.5 > span {
+        font-family: ${px} !important;
+        font-size: 9px !important;
+        font-weight: 400 !important;
+        letter-spacing: 0 !important;
+        color: ${A} !important;
+      }
+
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 {
+        background-color: ${shade(SIDE, 55)} !important;
+        border-top: 4px solid ${K} !important;
+        box-shadow: none !important;
+      }
+
+      /* Chunky buttons */
+      ${pill} {
+        background-color: ${A} !important;
+        background-image: none !important;
+        border: 3px solid ${K} !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 0 ${K} !important;
+        color: ${K} !important;
+        text-shadow: none !important;
+      }
+
+      html aside[data-component="sidebar"] [data-component="add-interest-input"] *,
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a),
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a) * {
+        color: ${K} !important;
+        text-shadow: none !important;
+        font-weight: 800 !important;
+      }
+
+      aside[data-component="sidebar"] [data-cy-badge] {
+        background-image: none !important;
+        background-color: ${S} !important;
+        border: 2px solid ${K} !important;
+        border-radius: 4px !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+      }
+
+      /* Call section */
+      .bg-call-screen-inchat-bg,
+      .dark\\:bg-call-screen-inchat-bg {
+        background: ${shade(SIDE, 45)} !important;
+        border: 3px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+      }
+
+      .bg-\\[\\#599C66\\]:not(.rounded-full):not([class*="size-"]),
+      [class*="bg-[#599c66" i]:not(.rounded-full):not([class*="size-"]) {
+        background-image: none !important;
+        background-color: #43b047 !important;
+        border: 3px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+        text-shadow: 1px 1px 0 ${K} !important;
+      }
+
+      [class*="bg-[#c54445" i],
+      .bg-\\[\\#C54445\\] {
+        background-image: none !important;
+        background-color: ${S} !important;
+        border: 3px solid ${K} !important;
+        box-shadow: 0 3px 0 ${K} !important;
+      }
+
+      html [data-chatbox] button[class*="bg-[#C54445" i],
+      html [data-chatbox] button[class*="bg-[#e5484d" i] {
+        background-image: none !important;
+        background-color: ${S} !important;
+        border: 3px solid ${K} !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 0 ${K} !important;
+        color: #ffffff !important;
+      }
+
+      html [data-msg-row] [data-msg-bubble="true"] a { color: #1b4fd8 !important; }
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] a { color: #ffffff !important; }
+
+      /* Scrollbars */
+      html::-webkit-scrollbar-thumb, [data-chatbox] *::-webkit-scrollbar-thumb, aside[data-component="sidebar"] *::-webkit-scrollbar-thumb {
+        background: ${A} !important;
+        border: 2px solid ${K} !important;
+        border-radius: 2px !important;
+        box-shadow: none !important;
+      }
+      html::-webkit-scrollbar-track, [data-chatbox] *::-webkit-scrollbar-track, aside[data-component="sidebar"] *::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.25) !important;
+        border-radius: 0 !important;
+      }
+    `;
+  }
+
+
+  // Textures are plain CSS gradients now (cheap to paint). No SVG filters are used.
+  function skeuoDefsMarkup() {
+    return "";
+  }
+
+  function syncSkeuoOverlay() {
+    const on = activeMode(currentSettings) === "skeuo";
+    const defs = document.getElementById(SKEUO_DEFS_ID);
+    const fxEl = document.getElementById(SKEUO_FX_ID);
+
+    if (!on) {
+      if (defs) defs.remove();
+      if (fxEl) fxEl.remove();
+      return;
+    }
+    if (!document.documentElement || !document.body) return;
+
+    const sig = String(currentSettings.bgColor);
+    let svg = defs;
+    if (!svg) {
+      const holder = document.createElement("div");
+      holder.innerHTML = '<svg id="' + SKEUO_DEFS_ID + '" width="0" height="0" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden"></svg>';
+      svg = holder.firstChild;
+      document.documentElement.appendChild(svg);
+    }
+    if (svg.getAttribute("data-sig") !== sig) {
+      svg.innerHTML = skeuoDefsMarkup(currentSettings);
+      svg.setAttribute("data-sig", sig);
+    }
+
+    if (window.top === window && !fxEl) {
+      const fx = document.createElement("div");
+      fx.id = SKEUO_FX_ID;
+      fx.setAttribute("aria-hidden", "true");
+      fx.innerHTML = '<div class="sk-noise"></div><div class="sk-vig"></div><div class="sk-tab">Convose</div>';
+      document.documentElement.appendChild(fx);
+    }
+  }
+
   const IRC_NICK_PALETTE = [
     "#5294e2",
     "#2ecc71",
@@ -1726,8 +2886,10 @@
   }
 
   function syncIrcMetadata() {
-    if (!currentSettings.ircMode && !currentSettings.cyberMode) return;
-    const cyber = Boolean(currentSettings.cyberMode);
+    const mode = activeMode(currentSettings);
+    if (!mode) return;
+    // Cyber and skeuo styles both use the per-bubble tag attributes
+    const cyber = mode === "cyber" || mode === "skeuo" || mode === "arcade";
 
     const myInput = document.querySelector('[data-component="my-username"]');
     const myName = (myInput && myInput.value && myInput.value.trim()) ? myInput.value.trim() : "you";
@@ -1821,6 +2983,8 @@
           if (bubble.getAttribute("data-cy-meta") !== meta) {
             bubble.setAttribute("data-cy-meta", meta);
           }
+          if (bubble.getAttribute("data-cy-nick") !== nick) bubble.setAttribute("data-cy-nick", nick);
+          if (bubble.getAttribute("data-cy-time") !== timeStr) bubble.setAttribute("data-cy-time", timeStr);
           if (isFirst) {
             if (bubble.getAttribute("data-cy-first") !== "true") bubble.setAttribute("data-cy-first", "true");
           } else if (bubble.hasAttribute("data-cy-first")) {
@@ -1836,7 +3000,8 @@
   //  - data-cy-badge on unread-count bubbles in the sidebar chat list
   // Only attributes are touched, never DOM nodes.
   function syncCyberTags() {
-    if (!currentSettings.cyberMode) {
+    const mode = activeMode(currentSettings);
+    if (mode !== "cyber" && mode !== "skeuo" && mode !== "arcade") {
       document.querySelectorAll("[data-cy-title]").forEach((el) => el.removeAttribute("data-cy-title"));
       document.querySelectorAll("[data-cy-badge]").forEach((el) => el.removeAttribute("data-cy-badge"));
       return;
@@ -1880,7 +3045,7 @@
   // Top-level HUD overlay (corner brackets, title tab, status clock, scan sweep).
   // Lives on <html>, outside React's tree, and never intercepts pointer events.
   function syncCyberOverlay() {
-    const wantHud = Boolean(currentSettings.cyberMode) && window.top === window;
+    const wantHud = activeMode(currentSettings) === "cyber" && window.top === window;
     const existing = document.getElementById(CYBER_HUD_ID);
 
     if (!wantHud) {
@@ -1917,58 +3082,134 @@
     window.__convoseCyberClock = setInterval(tick, 1000);
   }
 
+  // ---------------------------------------------------------------
+  // Runtime: one live instance at a time, build CSS only when settings change
+  // ---------------------------------------------------------------
+  const MY_GEN = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const MY_STYLE_ID = CUSTOMIZER_STYLE_ID + "-" + MY_GEN;
+  const GEN_ATTR = "data-convose-gen";
+  let mySheet = null;
+  try {
+    if ("adoptedStyleSheets" in document) mySheet = new CSSStyleSheet();
+  } catch (_) {
+    mySheet = null;
+  }
+  let torn = false;
+  let observer = null;
+  let throttleTimer = null;
+  let appliedSig = "";
+  let cachedCss = "";
+
+  // After the extension is reloaded, the old script keeps running in already-open tabs but its
+  // chrome.* APIs are dead. Detect that so it can clean itself up instead of fighting the new one.
+  function contextAlive() {
+    try {
+      return Boolean(chrome && chrome.runtime && chrome.runtime.id);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function isSuperseded() {
+    const root = document.documentElement;
+    const gen = root && root.getAttribute(GEN_ATTR);
+    return Boolean(gen && gen !== MY_GEN);
+  }
+
+  function teardown() {
+    if (torn) return;
+    torn = true;
+    if (observer) observer.disconnect();
+    if (throttleTimer) clearTimeout(throttleTimer);
+    try {
+      chrome.storage.onChanged.removeListener(onStorageChanged);
+      chrome.runtime.onMessage.removeListener(onRuntimeMessage);
+    } catch (_) {
+      // context already gone
+    }
+    window.removeEventListener("DOMContentLoaded", onDomReady);
+    window.removeEventListener("load", onWindowLoad);
+    try {
+      if (mySheet) {
+        document.adoptedStyleSheets = document.adoptedStyleSheets.filter((sh) => sh !== mySheet);
+      }
+    } catch (_) {
+      // ignore
+    }
+    const el = document.getElementById(MY_STYLE_ID);
+    if (el) el.remove();
+  }
+
+  function ensureStyleEl() {
+    const parent = document.head || document.documentElement;
+    let el = document.getElementById(MY_STYLE_ID);
+    if (!el) {
+      el = document.createElement("style");
+      el.id = MY_STYLE_ID;
+      el.textContent = cachedCss;
+      parent.appendChild(el);
+    } else if (el.parentElement !== parent || parent.lastElementChild !== el) {
+      parent.appendChild(el);
+    }
+    return el;
+  }
+
   function applyStylesToDOM() {
+    if (torn) return;
     const root = document.documentElement;
     if (!root) return;
 
-    const fontKey = (currentSettings.cyberMode && currentSettings.fontFamily === "default")
-      ? "cyber"
-      : (currentSettings.ircMode && currentSettings.fontFamily === "default" ? "jetbrains-mono" : currentSettings.fontFamily);
-    ensureGoogleFont(fontKey);
+    if (!contextAlive() || isSuperseded()) {
+      teardown();
+      return;
+    }
+    if (root.getAttribute(GEN_ATTR) !== MY_GEN) root.setAttribute(GEN_ATTR, MY_GEN);
+
+    // Heavy part: only when settings actually changed
+    const sig = JSON.stringify(currentSettings);
+    if (sig !== appliedSig) {
+      appliedSig = sig;
+      cachedCss = buildStylesheet(currentSettings);
+
+      const mode = activeMode(currentSettings);
+      const useDefaultFont = currentSettings.fontFamily === "default";
+      const fontKey = (mode === "cyber" && useDefaultFont) ? "cyber"
+        : (mode === "skeuo" && useDefaultFont) ? "skeuo"
+        : (mode === "arcade" && useDefaultFont) ? "arcade"
+        : (mode === "irc" && useDefaultFont) ? "jetbrains-mono"
+        : currentSettings.fontFamily;
+      ensureGoogleFont(fontKey);
+
+      const vars = getRootVariables(currentSettings);
+      for (const [k, v] of Object.entries(vars)) {
+        root.style.setProperty(k, v, "important");
+      }
+
+      if (mySheet) {
+        try {
+          mySheet.replaceSync(cachedCss);
+        } catch (_) {
+          // fall back to the <style> element below
+        }
+      }
+      ensureStyleEl().textContent = cachedCss;
+    }
+
+    // Cheap part: make sure our styles are still attached (React / Next.js can drop them)
+    try {
+      if (mySheet && !document.adoptedStyleSheets.includes(mySheet)) {
+        document.adoptedStyleSheets = [...document.adoptedStyleSheets, mySheet];
+      }
+    } catch (_) {
+      // ignore
+    }
+    ensureStyleEl();
+
+    // Per-chat tags and overlays (each one returns early when its style is off)
     syncIrcMetadata();
     syncCyberTags();
     syncCyberOverlay();
-    const css = buildStylesheet(currentSettings);
-
-    // 1. Set inline CSS custom properties directly on <html>
-    const vars = getRootVariables(currentSettings);
-    for (const [k, v] of Object.entries(vars)) {
-      root.style.setProperty(k, v, "important");
-    }
-
-    // 2. Apply via Constructable Stylesheets (cannot be wiped by React hydration)
-    try {
-      if ("adoptedStyleSheets" in document) {
-        if (!window.__convoseAdoptedSheet) {
-          window.__convoseAdoptedSheet = new CSSStyleSheet();
-        }
-        // Skip identical rewrites so running CSS animations are not restarted on every DOM mutation
-        if (window.__convoseLastCss !== css) {
-          window.__convoseAdoptedSheet.replaceSync(css);
-          window.__convoseLastCss = css;
-        }
-        if (!document.adoptedStyleSheets.includes(window.__convoseAdoptedSheet)) {
-          document.adoptedStyleSheets = [...document.adoptedStyleSheets, window.__convoseAdoptedSheet];
-        }
-      }
-    } catch (_) {
-      // Fallback to <style> element below
-    }
-
-    // 3. Also maintain <style id="convose-customizer-styles"> at the end of <head> or <html>
-    const targetParent = document.head || root;
-    let styleEl = document.getElementById(CUSTOMIZER_STYLE_ID);
-    if (!styleEl) {
-      styleEl = document.createElement("style");
-      styleEl.id = CUSTOMIZER_STYLE_ID;
-      targetParent.appendChild(styleEl);
-    } else if (styleEl.parentElement !== targetParent || targetParent.lastElementChild !== styleEl) {
-      targetParent.appendChild(styleEl);
-    }
-
-    if (styleEl.textContent !== css) {
-      styleEl.textContent = css;
-    }
+    syncSkeuoOverlay();
   }
 
   function updateSettings(settings) {
@@ -1976,66 +3217,63 @@
     applyStylesToDOM();
   }
 
+  function onStorageChanged() {
+    if (torn || !contextAlive()) return;
+    chrome.storage.local.get(defaultSettings, (settings) => {
+      updateSettings(settings);
+    });
+  }
+
+  function onRuntimeMessage(msg, _sender, sendResponse) {
+    if (torn) return;
+    if (msg && (msg.type === "APPLY_CONVOSE_STYLES" || msg.type === "CONVOSE_APPLY_SETTINGS")) {
+      updateSettings(msg.settings);
+      sendResponse({ ok: true });
+    }
+  }
+
+  function onDomReady() {
+    startObserver();
+    applyStylesToDOM();
+  }
+
+  function onWindowLoad() {
+    applyStylesToDOM();
+  }
+
+  function startObserver() {
+    if (torn || !observer || !document.documentElement) return;
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+  }
+
   window.__applyConvoseCustomizer = updateSettings;
 
-  // Load saved settings immediately
+  // Claim the page: any older live instance sees a different generation id and shuts itself down
+  if (document.documentElement) document.documentElement.setAttribute(GEN_ATTR, MY_GEN);
+
   if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
     chrome.storage.local.get(defaultSettings, (settings) => {
       updateSettings(settings);
     });
+    if (chrome.storage.onChanged) chrome.storage.onChanged.addListener(onStorageChanged);
   } else {
     applyStylesToDOM();
   }
 
-  // Always register message and storage listeners safely
-  if (!window.__convoseCustomizerInitialized) {
-    window.__convoseCustomizerInitialized = true;
-
-    if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.onChanged) {
-      chrome.storage.onChanged.addListener(() => {
-        chrome.storage.local.get(defaultSettings, (settings) => {
-          updateSettings(settings);
-        });
-      });
-    }
-
-    if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage) {
-      chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-        if (msg && (msg.type === "APPLY_CONVOSE_STYLES" || msg.type === "CONVOSE_APPLY_SETTINGS")) {
-          if (window.__applyConvoseCustomizer) {
-            window.__applyConvoseCustomizer(msg.settings);
-          } else {
-            updateSettings(msg.settings);
-          }
-          sendResponse({ ok: true });
-        }
-      });
-    }
-
-    let scheduled = false;
-    const observer = new MutationObserver(() => {
-      if (scheduled) return;
-      scheduled = true;
-      requestAnimationFrame(() => {
-        scheduled = false;
-        applyStylesToDOM();
-      });
-    });
-
-    const startObserver = () => {
-      if (document.documentElement) {
-        observer.observe(document.documentElement, {
-          childList: true,
-          subtree: true
-        });
-      }
-    };
-
-    startObserver();
-    window.addEventListener("DOMContentLoaded", () => {
-      startObserver();
-      applyStylesToDOM();
-    });
-    window.addEventListener("load", applyStylesToDOM);
+  if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.onMessage) {
+    chrome.runtime.onMessage.addListener(onRuntimeMessage);
   }
+
+  // Page changes (new messages, route changes) are frequent: re-check at most ~10 times a second
+  observer = new MutationObserver(() => {
+    if (throttleTimer || torn) return;
+    throttleTimer = setTimeout(() => {
+      throttleTimer = null;
+      requestAnimationFrame(applyStylesToDOM);
+    }, 100);
+  });
+
+  startObserver();
+  window.addEventListener("DOMContentLoaded", onDomReady);
+  window.addEventListener("load", onWindowLoad);
 })();

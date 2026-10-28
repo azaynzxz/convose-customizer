@@ -187,7 +187,7 @@
 <body>
   <div class="header">
     <h3>Convose Customizer</h3>
-    <span class="badge">v1.4</span>
+    <span class="badge">v1.6</span>
   </div>
 
   <div class="section-title">Theme Pack Presets</div>
@@ -203,6 +203,11 @@
       <option value="dracula-pro">Dracula Pro</option>
       <option value="solarized-dark">Solarized Dark</option>
       <option value="komanda-irc">Komanda IRC</option>
+      <option value="walnut-denim">Walnut and Denim (Retro)</option>
+      <option value="leather-brass">Leather and Brass (Retro)</option>
+      <option value="brushed-steel">Brushed Steel (Retro)</option>
+      <option value="sky-arcade">Sky Arcade (8-bit)</option>
+      <option value="castle-arcade">Castle Arcade (8-bit)</option>
       <option value="cyber-hud">Cyber HUD (Cyan)</option>
       <option value="night-city">Night City (Magenta)</option>
       <option value="olive-union">Olive Union (Khaki)</option>
@@ -234,6 +239,21 @@
     </button>
     <button type="button" class="preset-chip" data-preset="komanda-irc">
       <span class="swatch-dot" style="background:#5294e2"></span>IRC
+    </button>
+    <button type="button" class="preset-chip" data-preset="walnut-denim">
+      <span class="swatch-dot" style="background:#2f4a6b"></span>Denim
+    </button>
+    <button type="button" class="preset-chip" data-preset="leather-brass">
+      <span class="swatch-dot" style="background:#b8862e"></span>Brass
+    </button>
+    <button type="button" class="preset-chip" data-preset="brushed-steel">
+      <span class="swatch-dot" style="background:#8a8e94"></span>Steel
+    </button>
+    <button type="button" class="preset-chip" data-preset="sky-arcade">
+      <span class="swatch-dot" style="background:#5c94fc"></span>Sky
+    </button>
+    <button type="button" class="preset-chip" data-preset="castle-arcade">
+      <span class="swatch-dot" style="background:#8a2323"></span>Castle
     </button>
     <button type="button" class="preset-chip" data-preset="cyber-hud">
       <span class="swatch-dot" style="background:#19f0ff"></span>HUD
@@ -270,7 +290,15 @@
     <input type="checkbox" id="cyberMode">
   </div>
   <div class="row">
-    <label for="cyberFx">Cyber FX (scan / glow)</label>
+    <label for="skeuoMode">Skeuomorphic Style <span class="exp-badge">RETRO</span></label>
+    <input type="checkbox" id="skeuoMode">
+  </div>
+  <div class="row">
+    <label for="arcadeMode">Arcade Style <span class="exp-badge">8-BIT</span></label>
+    <input type="checkbox" id="arcadeMode">
+  </div>
+  <div class="row">
+    <label for="cyberFx">Style FX (glow / textures)</label>
     <input type="checkbox" id="cyberFx">
   </div>
 
@@ -322,7 +350,7 @@
     <input type="color" id="accentColor">
   </div>
   <div class="row">
-    <label for="secondaryColor">Own Messages (Cyber)</label>
+    <label for="secondaryColor">Own Messages (Cyber/Retro)</label>
     <input type="color" id="secondaryColor">
   </div>
   <div class="row">

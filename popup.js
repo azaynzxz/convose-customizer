@@ -71,9 +71,60 @@ const THEME_PRESETS = {
     accentColor: "#5294e2",
     textColor: "#e6edf3"
   },
-  // Cyber packs also switch on Cyber Style (and switch off IRC style, which conflicts with it)
+  // Skeuomorphic packs switch on Skeuomorphic Style (and switch off the other chat styles)
+  // bg = wood tint, sidebar = denim, card = paper, bubble = partner bubble, accent = glossy highlight,
+  // secondary = own bubble, text = ink on paper
+  "walnut-denim": {
+    skeuoMode: true,
+    cyberMode: false,
+    ircMode: false,
+    bgColor: "#4a2c19",
+    sidebarColor: "#2f4a6b",
+    cardColor: "#e8dcc0",
+    bubbleColor: "#f6f0df",
+    accentColor: "#2d7be0",
+    secondaryColor: "#5cb85c",
+    textColor: "#2b2118"
+  },
+  "leather-brass": {
+    skeuoMode: true,
+    cyberMode: false,
+    ircMode: false,
+    bgColor: "#2e2016",
+    sidebarColor: "#5a3a22",
+    cardColor: "#dccaa2",
+    bubbleColor: "#f3e8cc",
+    accentColor: "#b8862e",
+    secondaryColor: "#c9923a",
+    textColor: "#2a1d10"
+  },
+  "brushed-steel": {
+    skeuoMode: true,
+    cyberMode: false,
+    ircMode: false,
+    bgColor: "#5d6065",
+    sidebarColor: "#4a4d52",
+    cardColor: "#cfd2d6",
+    bubbleColor: "#eceeef",
+    accentColor: "#3b7fd6",
+    secondaryColor: "#4f94e6",
+    textColor: "#25272a"
+  },
+  // Arcade packs: bright 8-bit look (own style, no other chat style)
+  "sky-arcade": {
+    arcadeMode: true, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#5c94fc", sidebarColor: "#b5502b", cardColor: "#fff3c4", bubbleColor: "#ffffff",
+    accentColor: "#fbd000", secondaryColor: "#e52521", textColor: "#2b1b0e"
+  },
+  "castle-arcade": {
+    arcadeMode: true, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#3b3b46", sidebarColor: "#8a2323", cardColor: "#f1e6d0", bubbleColor: "#ffffff",
+    accentColor: "#ff9a1f", secondaryColor: "#2f8f3a", textColor: "#241a12"
+  },
+  // Cyber packs also switch on Cyber Style (and switch off the other chat styles, which conflict with it)
   "cyber-hud": {
     cyberMode: true,
+    skeuoMode: false,
     ircMode: false,
     bgColor: "#04080a",
     sidebarColor: "#060d10",
@@ -85,6 +136,7 @@ const THEME_PRESETS = {
   },
   "night-city": {
     cyberMode: true,
+    skeuoMode: false,
     ircMode: false,
     bgColor: "#0a0508",
     sidebarColor: "#10080d",
@@ -96,6 +148,7 @@ const THEME_PRESETS = {
   },
   "olive-union": {
     cyberMode: true,
+    skeuoMode: false,
     ircMode: false,
     bgColor: "#0e110c",
     sidebarColor: "#12160f",
@@ -114,6 +167,8 @@ const defaultSettings = {
   hideSmartPrompts: false,
   ircMode: false,
   cyberMode: false,
+  skeuoMode: false,
+  arcadeMode: false,
   cyberFx: true,
   bgColor: "#0a0a0a",
   sidebarColor: "#121212",
@@ -243,7 +298,7 @@ if (presetSelect) {
     const current = getCurrentSettingsFromInputs();
     current.themePreset = chosen;
     if (THEME_PRESETS[chosen]) {
-      Object.assign(current, THEME_PRESETS[chosen]);
+      Object.assign(current, { ircMode: false, cyberMode: false, skeuoMode: false, arcadeMode: false }, THEME_PRESETS[chosen]);
     }
     saveAndPush(current);
   });
@@ -256,7 +311,7 @@ presetChips.forEach((chip) => {
     if (!chosen || !THEME_PRESETS[chosen]) return;
     const current = getCurrentSettingsFromInputs();
     current.themePreset = chosen;
-    Object.assign(current, THEME_PRESETS[chosen]);
+    Object.assign(current, { ircMode: false, cyberMode: false, skeuoMode: false, arcadeMode: false }, THEME_PRESETS[chosen]);
     saveAndPush(current);
   });
 });
@@ -272,9 +327,13 @@ keys.forEach((key) => {
     if (colorKeys.includes(key)) {
       updated.themePreset = "custom";
     }
-    // IRC style and Cyber style are two different chat looks: only one can be on
-    if (key === "cyberMode" && updated.cyberMode) updated.ircMode = false;
-    if (key === "ircMode" && updated.ircMode) updated.cyberMode = false;
+    // IRC, Cyber and Skeuomorphic are three different chat looks: only one can be on
+    const modeKeys = ["ircMode", "cyberMode", "skeuoMode", "arcadeMode"];
+    if (modeKeys.includes(key) && updated[key]) {
+      modeKeys.forEach((k) => {
+        if (k !== key) updated[k] = false;
+      });
+    }
     saveAndPush(updated);
   });
 });

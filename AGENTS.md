@@ -221,6 +221,26 @@ A sci-fi / Jarvis-style HUD look (references: Cyberpunk 2077 chat UI, HUD elemen
 
 ---
 
+## 4c. Experimental View: Skeuomorphic Style (`settings.skeuoMode`)
+
+Retro "real objects" look (denim, leather, paper, wood, brushed metal, glossy buttons). Mode priority is resolved by `activeMode()` in `content.js` (skeuo > cyber > irc); the popup also makes the three mode checkboxes mutually exclusive.
+
+1. **Entry point**: `buildSkeuoCss(settings, fontStack)`. Palette mapping: `bgColor` = wood tint, `sidebarColor` = denim, `cardColor` = paper, `bubbleColor` = partner bubble paper, `accentColor` = glossy highlight, `secondaryColor` = own bubble, `textColor` = ink on paper. Sidebar and header text use fixed cream, not `textColor`.
+2. **Shared metadata**: skeuo reuses the cyber attributes written by `syncIrcMetadata()` / `syncCyberTags()` (`data-irc-mine`, `data-cy-first`, `data-cy-nick`, `data-cy-time`, `data-cy-title`, `data-cy-badge`). The `Name  time` tag is the bubble's `::before`.
+3. **Textures** are SVG filters injected by `syncSkeuoOverlay()` as `#convose-skeuo-defs` on `<html>`: `sk-wood` (streaky grain tinted from `bgColor`), `sk-leather` (diffuse-lit noise), `sk-grain` (page speckle). A filter on an empty pseudo-element makes feTurbulence produce the pixels, so no image or data URL (CSP safe). The pseudo-element has a flat fallback colour in case the filter fails. `cyberFx: false` turns all of them off.
+4. **Do not put a CSS `filter` on a container that holds popovers** (emoji picker, menus): it becomes the containing block for fixed descendants. Textures live on `::before` pseudo-elements only; the header children get `z-index` so they stay above the leather.
+5. **Glossy look**: `gloss(c)` builds a split-highlight gradient (bright top half, darker bottom half); `metal` is the grey equivalent. The bubble fill uses `background-image` so Convose's `!important` hover `background-color` rules cannot replace it.
+6. **Desk layering**: the grid's `::before` (wood) and `::after` (plank seams) are siblings of the chat canvas, so the canvas wrapper gets `position: relative; z-index: 1` to stay above the seams.
+7. **Overlay**: `#convose-skeuo-fx` (top frame only) holds the fine grain, vignette and the denim "Convose" tab. `pointer-events: none`.
+8. **Presets**: `walnut-denim`, `leather-brass`, `brushed-steel` set `skeuoMode: true` and turn the other modes off.
+
+---
+
 ## 5. Development Rules & Constraints
 - **Strict Ban on Emojis**: Never use emojis in any code, HTML, CSS, comments, logs, or UI strings. Use SVG icons or plain text badges (such as `EXP`).
 - **Syntax Validation**: Always run `node --check "D:\Praktek\convose-customizer\content.js"; node --check "D:\Praktek\convose-customizer\popup.js"` after editing JS files.
+
+
+## 4d. Experimental View: Arcade Style (`settings.arcadeMode`)
+
+8-bit game look. `buildArcadeCss()` in `content.js` returns `buildSkeuoCss({...settings, cyberFx:false})` (same layout hooks, no textures) plus a flattening layer: thick `#1a1a1a` outlines, hard offset shadows, no gradients, gold buttons, brick-block sidebar made from gradients, Press Start 2P for labels only. Priority: skeuo > arcade > cyber > irc. It reuses the `data-cy-*` and `data-irc-mine` attributes. No overlay nodes. The popup makes four mode checkboxes mutually exclusive and resets all mode flags when a preset is applied.

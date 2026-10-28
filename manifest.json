@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Convose Theme & Layout Customizer",
-  "version": "1.4",
-  "description": "Hides the bloated suggestion grid, makes active chats full screen, and customizes the color theme. Includes IRC and Cyber HUD chat styles.",
+  "version": "1.6",
+  "description": "Hides the bloated suggestion grid, makes active chats full screen, and customizes the color theme. Includes IRC, Cyber HUD, Skeuomorphic and Arcade chat styles.",
   "permissions": [
     "storage",
     "activeTab",
