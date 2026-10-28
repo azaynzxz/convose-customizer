@@ -87,6 +87,8 @@
     const subtleBorder = `color-mix(in srgb, ${settings.bubbleColor} 80%, rgba(255, 255, 255, 0.25))`;
     const reactedBg = `color-mix(in srgb, ${settings.bubbleColor} 35%, ${settings.accentColor})`;
     const hoverAccent = `color-mix(in srgb, ${settings.bubbleColor} 55%, ${settings.accentColor})`;
+    const interestHover = `color-mix(in srgb, ${settings.bubbleColor} 70%, ${settings.accentColor})`;
+    const interestSelected = `color-mix(in srgb, ${settings.bubbleColor} 55%, ${settings.accentColor})`;
 
     return {
       "--body-background": settings.bgColor,
@@ -184,7 +186,23 @@
       "--color-primary-hover": hoverAccent,
       "--color-start-quick-call-btn-bg": settings.accentColor,
       "--color-scroll-bar-bg": `color-mix(in srgb, ${settings.accentColor} 45%, transparent)`,
-      "--color-text-color": settings.textColor
+      "--color-text-color": settings.textColor,
+
+      "--bg-interest-header-hover": interestHover,
+      "--selected-interest-bg": interestSelected,
+      "--interest-selected": interestSelected,
+      "--interest-icon-light-bg": settings.cardColor,
+      "--knowledge-level-color": settings.accentColor,
+      "--modal-knowledge-level-border-color": settings.accentColor,
+      "--color-bg-interest-header": settings.bubbleColor,
+      "--color-bg-interest-header-hover": interestHover,
+      "--color-selected-interest-bg": interestSelected,
+      "--color-interest-selected": interestSelected,
+      "--color-interest-icon-light-bg": settings.cardColor,
+      "--color-knowledge-level-bg": settings.bubbleColor,
+      "--color-knowledge-level-color": settings.accentColor,
+      "--color-modal-knowledge-level-bg": settings.bubbleColor,
+      "--color-modal-knowledge-level-border-color": settings.accentColor
     };
   }
 
@@ -285,6 +303,55 @@
       border-color: ${subtleBorder} !important;
     }
 
+    /* Interest chips (profile modal + sidebar): no black or white pills, level dots follow the accent */
+    .bg-bg-interest-header,
+    .bg-selected-interest-bg,
+    .bg-interest-selected,
+    .bg-interest-icon-light-bg {
+      border-color: ${subtleBorder} !important;
+    }
+
+    .bg-bg-interest-header {
+      background-color: ${settings.bubbleColor} !important;
+    }
+
+    .bg-bg-interest-header:hover,
+    .hover\\:bg-bg-interest-header-hover:hover,
+    .bg-bg-interest-header-hover {
+      background-color: color-mix(in srgb, ${settings.bubbleColor} 70%, ${settings.accentColor}) !important;
+    }
+
+    .bg-selected-interest-bg,
+    .bg-interest-selected {
+      background-color: color-mix(in srgb, ${settings.bubbleColor} 55%, ${settings.accentColor}) !important;
+    }
+
+    .bg-interest-icon-light-bg {
+      background-color: ${settings.cardColor} !important;
+    }
+
+    [data-component="my-interests"] [data-interest-chip],
+    [data-component="my-interests"] [data-interest-chip]:hover {
+      color: ${settings.textColor} !important;
+    }
+
+    [data-component="my-interests"] [data-interest-chip]:hover {
+      background-color: color-mix(in srgb, ${settings.bubbleColor} 70%, ${settings.accentColor}) !important;
+    }
+
+    [data-component="my-interests"] [data-interest-chip] [class*="knowledge-level"] {
+      border-color: ${settings.accentColor} !important;
+    }
+
+    .border-knowledge-level-color,
+    .border-modal-knowledge-level-border-color {
+      border-color: ${settings.accentColor} !important;
+    }
+
+    .bg-modal-knowledge-level-bg,
+    .bg-knowledge-level-bg {
+      background-color: color-mix(in srgb, ${settings.bubbleColor} 88%, ${settings.cardColor}) !important;
+    }
     .bg-social-link-item-bg {
       background-color: ${settings.cardColor} !important;
       border-color: ${subtleBorder} !important;
@@ -1626,7 +1693,7 @@
         ${fx ? `box-shadow: 1px 0 14px -5px ${mix(A, 45)} !important;` : ""}
       }
 
-      aside[data-component="sidebar"] * {
+      aside[data-component="sidebar"] :is(p, span, button, a, input, div) {
         font-family: ${mono} !important;
         letter-spacing: 0.01em;
       }
@@ -1749,8 +1816,7 @@
         ${fx ? `box-shadow: inset 0 0 18px -8px ${mix(S, 60)} !important;` : ""}
       }
 
-      .bg-\\[\\#599C66\\]:not(.rounded-full):not([class*="size-"]) *,
-      [class*="bg-[#599c66" i]:not(.rounded-full):not([class*="size-"]) * {
+      .bg-\\[\\#599C66\\]:not(.rounded-full):not([class*="size-"]) * {
         color: ${S} !important;
         font-family: ${mono} !important;
       }
@@ -1971,7 +2037,6 @@
         pointer-events: none;
         background-color: ${BG};
         ${fx ? `background-image:
-          repeating-linear-gradient(90deg, ${shade(BG, 14)} 0 1px, transparent 1px 7px, ${tone(BG, 5)} 7px 8px, transparent 8px 19px),
           repeating-linear-gradient(90deg, transparent 0 53px, ${shade(BG, 22)} 53px 55px, transparent 55px 131px),
           linear-gradient(180deg, ${tone(BG, 6)}, transparent 40%, ${shade(BG, 12)});` : ""}
       }
@@ -1992,12 +2057,12 @@
         border-radius: 10px !important;
         border-color: transparent !important;
         background: ${PAPER} !important;
-        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 10px 22px rgba(0, 0, 0, 0.6) !important;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 4px 0 rgba(0, 0, 0, 0.35) !important;
       }
 
       ${gridSlot}.bg-modal-input-border-focus-color {
         background: ${PAPER} !important;
-        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7), 0 0 0 3px ${rgba(A, 85)}, 0 0 16px 2px ${rgba(A, 55)}, 0 10px 22px rgba(0, 0, 0, 0.6) !important;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.7), 0 0 0 3px ${rgba(A, 85)}, 0 4px 0 rgba(0, 0, 0, 0.35) !important;
       }
 
       [data-chatbox],
@@ -2006,8 +2071,7 @@
         border-radius: 10px !important;
       }
 
-      [data-chatbox],
-      [data-chatbox] * {
+      [data-chatbox] {
         font-family: ${font};
       }
 
@@ -2031,11 +2095,7 @@
         border-radius: inherit;
         pointer-events: none;
         background-color: #232120;
-        ${fx ? `background-image:
-          radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.10) 0 1px, transparent 1.6px),
-          radial-gradient(circle at 70% 70%, rgba(0, 0, 0, 0.35) 0 1px, transparent 1.6px);
-        background-size: 5px 5px, 5px 5px;
-        background-position: 0 0, 2px 2px;` : ""}
+        
       }
 
       [data-chatbox] header::after {
@@ -2081,7 +2141,7 @@
       }
 
       [data-chatbox] header svg {
-        filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.9));
+        filter: none;
       }
 
       [data-chatbox] header img {
@@ -2094,10 +2154,8 @@
       [data-chatbox] .bg-group-card-chat-screen-bg {
         background:
           radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.38), transparent 65%),
-          repeating-linear-gradient(0deg, rgba(110, 80, 30, 0.04) 0 1px, transparent 1px 3px),
-          repeating-linear-gradient(90deg, rgba(110, 80, 30, 0.035) 0 1px, transparent 1px 3px),
           ${PAPER} !important;
-        box-shadow: inset 0 7px 8px -6px rgba(0, 0, 0, 0.5), inset 0 -5px 7px -6px rgba(0, 0, 0, 0.3);
+        box-shadow: inset 0 3px 0 -1px rgba(0, 0, 0, 0.18);
       }
 
       /* Text that Convose draws in white must stay readable on paper */
@@ -2168,7 +2226,7 @@
       }
 
       [data-msg-row]:hover [data-msg-bubble="true"]:not([data-message-type="intro"]) {
-        filter: brightness(1.05) !important;
+        opacity: 0.96 !important;
       }
 
       /* Tag line inside the first bubble of a speaker block */
@@ -2344,7 +2402,7 @@
 
       [data-component="chat-input"] svg {
         color: ${shade(PAPER, 62)} !important;
-        filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.7));
+        filter: none;
       }
 
       .group\\/smart > div > div {
@@ -2379,7 +2437,7 @@
           repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 3px),
           repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.11) 0 1px, transparent 1px 3px) !important;
         border-right: 1px solid #000 !important;
-        box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.12), 7px 0 16px rgba(0, 0, 0, 0.6) !important;
+        box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.12), 3px 0 0 rgba(0, 0, 0, 0.4) !important;
       }
 
       .group\\/sidebar::after {
@@ -2397,7 +2455,7 @@
         text-shadow: 0 ${sideLight ? "-1px" : "1px"} 0 ${sideShadow};
       }
 
-      aside[data-component="sidebar"] * {
+      aside[data-component="sidebar"] :is(p, span, button, a, input, div) {
         font-family: ${font} !important;
       }
 
@@ -2516,8 +2574,7 @@
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 1px 3px rgba(0, 0, 0, 0.5) !important;
       }
 
-      .bg-\\[\\#599C66\\]:not(.rounded-full):not([class*="size-"]) *,
-      [class*="bg-[#599c66" i]:not(.rounded-full):not([class*="size-"]) * {
+      .bg-\\[\\#599C66\\]:not(.rounded-full):not([class*="size-"]) * {
         color: #ffffff !important;
       }
 
@@ -2543,13 +2600,9 @@
       }
 
       /* ---- Scrollbars: dark leather thumb on an inset track ---- */
-      html::-webkit-scrollbar, [data-chatbox] *::-webkit-scrollbar, aside[data-component="sidebar"] *::-webkit-scrollbar { width: 11px; height: 11px; }
-      html::-webkit-scrollbar-track, [data-chatbox] *::-webkit-scrollbar-track, aside[data-component="sidebar"] *::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.22) !important; border-radius: 6px; }
-      html::-webkit-scrollbar-thumb, [data-chatbox] *::-webkit-scrollbar-thumb, aside[data-component="sidebar"] *::-webkit-scrollbar-thumb {
-        background: linear-gradient(90deg, #7a766f, #3d3a36) !important;
-        border: 1px solid #1c1a18;
-        border-radius: 6px !important;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      html, [data-chatbox], aside[data-component="sidebar"] {
+        scrollbar-width: thin;
+        scrollbar-color: #5a5650 rgba(0, 0, 0, 0.22);
       }
 
       /* ---- Overlay: fine grain, vignette, hanging denim tab ---- */
@@ -2567,6 +2620,8 @@
       }
 
       #${SKEUO_FX_ID} .sk-vig {
+        display: none;
+      } .sk-vig {
         position: absolute;
         inset: 0;
         background: radial-gradient(ellipse at 50% 45%, transparent 62%, rgba(0, 0, 0, 0.28) 100%);
@@ -2581,9 +2636,7 @@
         border-radius: 0 0 10px 10px;
         background-color: ${SIDE};
         background-image:
-          linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.3)),
-          repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 3px),
-          repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 3px);
+          linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.3));
         border: 1px solid #000;
         border-top: none;
         box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.15), 0 3px 6px rgba(0, 0, 0, 0.55);
@@ -2877,15 +2930,9 @@
       html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] a { color: #ffffff !important; }
 
       /* Scrollbars */
-      html::-webkit-scrollbar-thumb, [data-chatbox] *::-webkit-scrollbar-thumb, aside[data-component="sidebar"] *::-webkit-scrollbar-thumb {
-        background: ${A} !important;
-        border: 2px solid ${K} !important;
-        border-radius: 2px !important;
-        box-shadow: none !important;
-      }
-      html::-webkit-scrollbar-track, [data-chatbox] *::-webkit-scrollbar-track, aside[data-component="sidebar"] *::-webkit-scrollbar-track {
-        background: rgba(0, 0, 0, 0.25) !important;
-        border-radius: 0 !important;
+      html, [data-chatbox], aside[data-component="sidebar"] {
+        scrollbar-width: thin;
+        scrollbar-color: ${A} rgba(0, 0, 0, 0.25);
       }
     `;
   }
@@ -3435,6 +3482,7 @@
   let torn = false;
   let observer = null;
   let throttleTimer = null;
+  var lastKeyAt = 0;
   let appliedSig = "";
   let cachedCss = "";
 
@@ -3466,6 +3514,8 @@
       // context already gone
     }
     window.removeEventListener("DOMContentLoaded", onDomReady);
+    window.removeEventListener("keydown", onTypingEvent, true);
+    window.removeEventListener("input", onTypingEvent, true);
     window.removeEventListener("load", onWindowLoad);
     try {
       if (mySheet) {
@@ -3604,12 +3654,43 @@
   }
 
   // Page changes (new messages, route changes) are frequent: re-check at most ~10 times a second
-  observer = new MutationObserver(() => {
+  // Typing performance: mutations that come from the message input (contenteditable / textarea)
+  // never change anything we tag, so they are ignored. While keys are being pressed, the heavy
+  // sync is postponed until the user pauses.
+  function onTypingEvent() { lastKeyAt = Date.now(); }
+  window.addEventListener("keydown", onTypingEvent, true);
+  window.addEventListener("input", onTypingEvent, true);
+
+  function isTypingNoise(records) {
+    for (const r of records) {
+      const t = r.target;
+      const el = t && t.nodeType === 1 ? t : (t && t.parentElement);
+      if (!el || !el.closest) return false;
+      if (!el.closest('[data-component="chat-input"], [contenteditable], textarea, [role="textbox"]')) return false;
+    }
+    return true;
+  }
+
+  function scheduleApply() {
     if (throttleTimer || torn) return;
+    const sinceKey = Date.now() - lastKeyAt;
+    const delay = sinceKey < 600 ? 650 - sinceKey : 150;
     throttleTimer = setTimeout(() => {
       throttleTimer = null;
-      requestAnimationFrame(applyStylesToDOM);
-    }, 100);
+      if (Date.now() - lastKeyAt < 600) {
+        scheduleApply();
+        return;
+      }
+      const run = () => applyStylesToDOM();
+      if (typeof requestIdleCallback === "function") requestIdleCallback(run, { timeout: 500 });
+      else requestAnimationFrame(run);
+    }, delay);
+  }
+
+  observer = new MutationObserver((records) => {
+    if (torn || throttleTimer) return;
+    if (isTypingNoise(records)) return;
+    scheduleApply();
   });
 
   startObserver();
