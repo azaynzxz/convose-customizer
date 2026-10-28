@@ -110,6 +110,42 @@ const THEME_PRESETS = {
     secondaryColor: "#4f94e6",
     textColor: "#25272a"
   },
+  // Neo-brutalist packs
+  "gumroad-pink": {
+    brutalMode: true, arcadeMode: false, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#f4f1ea", sidebarColor: "#ffc900", cardColor: "#fffdf8", bubbleColor: "#ffffff",
+    accentColor: "#ffc900", secondaryColor: "#ff90e8", textColor: "#111111"
+  },
+  "taxi-brutal": {
+    brutalMode: true, arcadeMode: false, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#faf7f0", sidebarColor: "#f8f5ee", cardColor: "#ffffff", bubbleColor: "#ffffff",
+    accentColor: "#f7b900", secondaryColor: "#ff6a1a", textColor: "#111111"
+  },
+  "mint-brutal": {
+    brutalMode: true, arcadeMode: false, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#e6f6ec", sidebarColor: "#5ee6a0", cardColor: "#ffffff", bubbleColor: "#ffffff",
+    accentColor: "#5ee6a0", secondaryColor: "#ffd23f", textColor: "#111111"
+  },
+  "lilac-brutal": {
+    brutalMode: true, arcadeMode: false, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#efeaff", sidebarColor: "#8b7bff", cardColor: "#ffffff", bubbleColor: "#ffffff",
+    accentColor: "#8b7bff", secondaryColor: "#ff90e8", textColor: "#111111"
+  },
+  "sky-brutal": {
+    brutalMode: true, arcadeMode: false, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#e8f3ff", sidebarColor: "#4aa8ff", cardColor: "#ffffff", bubbleColor: "#ffffff",
+    accentColor: "#ffd23f", secondaryColor: "#ff7a7a", textColor: "#111111"
+  },
+  "tangerine-brutal": {
+    brutalMode: true, arcadeMode: false, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#fff1e0", sidebarColor: "#ff8a3d", cardColor: "#fffaf3", bubbleColor: "#ffffff",
+    accentColor: "#ff8a3d", secondaryColor: "#7be0c3", textColor: "#111111"
+  },
+  "ink-brutal": {
+    brutalMode: true, arcadeMode: false, skeuoMode: false, cyberMode: false, ircMode: false,
+    bgColor: "#f4f1ea", sidebarColor: "#2b2b2b", cardColor: "#fffdf8", bubbleColor: "#ffffff",
+    accentColor: "#111111", secondaryColor: "#c8f542", textColor: "#111111"
+  },
   // Arcade packs: bright 8-bit look (own style, no other chat style)
   "sky-arcade": {
     arcadeMode: true, skeuoMode: false, cyberMode: false, ircMode: false,
@@ -169,6 +205,7 @@ const defaultSettings = {
   cyberMode: false,
   skeuoMode: false,
   arcadeMode: false,
+  brutalMode: false,
   cyberFx: true,
   bgColor: "#0a0a0a",
   sidebarColor: "#121212",
@@ -193,14 +230,25 @@ function setStatus(text, color = "#9ca3af") {
   statusEl.style.color = color;
 }
 
+function showCategory(cat) {
+  document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("on", t.dataset.cat === cat));
+  document.querySelectorAll(".pane").forEach((pn) => pn.classList.toggle("on", pn.dataset.pane === cat));
+}
+
+document.querySelectorAll(".tab").forEach((t) => {
+  t.addEventListener("click", () => showCategory(t.dataset.cat));
+});
+
 function syncPresetChips(activePreset) {
+  let activeCat = "";
   presetChips.forEach((chip) => {
-    if (chip.dataset.preset === activePreset) {
-      chip.classList.add("active");
-    } else {
-      chip.classList.remove("active");
-    }
+    const on = chip.dataset.preset === activePreset;
+    chip.classList.toggle("active", on);
+    if (on) activeCat = chip.dataset.cat;
   });
+  // Open the category of the active preset (keep the current tab for "custom")
+  if (activeCat) showCategory(activeCat);
+  else if (!document.querySelector(".pane.on")) showCategory("classic");
 }
 
 function populateInputs(settings) {
@@ -298,7 +346,7 @@ if (presetSelect) {
     const current = getCurrentSettingsFromInputs();
     current.themePreset = chosen;
     if (THEME_PRESETS[chosen]) {
-      Object.assign(current, { ircMode: false, cyberMode: false, skeuoMode: false, arcadeMode: false }, THEME_PRESETS[chosen]);
+      Object.assign(current, { ircMode: false, cyberMode: false, skeuoMode: false, arcadeMode: false, brutalMode: false }, THEME_PRESETS[chosen]);
     }
     saveAndPush(current);
   });
@@ -311,7 +359,7 @@ presetChips.forEach((chip) => {
     if (!chosen || !THEME_PRESETS[chosen]) return;
     const current = getCurrentSettingsFromInputs();
     current.themePreset = chosen;
-    Object.assign(current, { ircMode: false, cyberMode: false, skeuoMode: false, arcadeMode: false }, THEME_PRESETS[chosen]);
+    Object.assign(current, { ircMode: false, cyberMode: false, skeuoMode: false, arcadeMode: false, brutalMode: false }, THEME_PRESETS[chosen]);
     saveAndPush(current);
   });
 });
@@ -328,7 +376,7 @@ keys.forEach((key) => {
       updated.themePreset = "custom";
     }
     // IRC, Cyber and Skeuomorphic are three different chat looks: only one can be on
-    const modeKeys = ["ircMode", "cyberMode", "skeuoMode", "arcadeMode"];
+    const modeKeys = ["ircMode", "cyberMode", "skeuoMode", "arcadeMode", "brutalMode"];
     if (modeKeys.includes(key) && updated[key]) {
       modeKeys.forEach((k) => {
         if (k !== key) updated[k] = false;

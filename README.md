@@ -2,13 +2,13 @@
 
 A Chrome / Edge extension that changes how https://www.convose.com looks and feels. It runs only on convose.com and keeps your settings in the browser.
 
-Version: 1.6
+Version: 1.8.2
 
 ## What it does
 
 - Colour themes with ready-made presets and your own colours
 - Hides the suggestion grid and makes active chats full screen
-- Four chat styles: IRC, Cyber (1.4), Skeuomorphic (1.5) and Arcade (1.6)
+- Five chat styles: IRC, Cyber (1.4), Skeuomorphic (1.5), Arcade (1.6) and Neo-Brutal (1.7)
 - Font choice and corner roundness
 
 ## Install
@@ -23,9 +23,9 @@ To update, unpack the new files over the old folder, then press the reload butto
 
 ## Popup settings
 
-### Theme Pack Presets
+### Theme categories
 
-Pick a preset from the dropdown or click a chip.
+The popup groups presets into six tabs: Classic (dark colour themes), IRC, Retro, Brutal, Arcade and Cyber. Each preset card shows three colour stripes (page, sidebar, accent). The tab of the active preset opens by itself. Chat styles are switches with a short description. Fonts, corner radius and custom colours are in folded sections.
 
 | Preset | Look |
 | --- | --- |
@@ -109,6 +109,16 @@ A bright 8-bit game look with original art made only from CSS (no characters, lo
 - **Buttons:** chunky gold buttons with a black edge and a solid bottom shadow.
 - **Presets:** Sky Arcade and Castle Arcade. Colour mapping is the same as Skeuomorphic Style.
 
+## Neo-Brutal Style
+
+A flat, bold look in the spirit of Gumroad: cream page with a dot grid, thick black outlines, hard offset shadows, bright flat colours. No textures, no filters, so it is light and fast.
+
+- **Chat cards:** white panels with a black outline and a solid black shadow. Header strips use the Primary Accent colour with big condensed capital titles (Bebas Neue).
+- **Bubbles:** other people are white, you are pink. All bubble text is black, so it stays readable (including voice-note transcripts).
+- **Sidebar:** flat panel with white blocks and black text. Hovering a block turns it pink. The bottom bar and the Upgrade button use black text on light colours.
+- **Presets:** Gumroad Pink, Taxi Yellow, Mint, Lilac, Blue Sky, Tangerine and Ink Black.
+- **Auto text colour:** the extension measures how bright each colour is (headers, buttons, bubbles, sidebar labels) and uses black text on bright colours and white text on dark ones. Pick any colours you like and the text stays readable.
+
 ## Files
 
 | File | Purpose |
@@ -119,6 +129,10 @@ A bright 8-bit game look with original art made only from CSS (no characters, lo
 | `popup.html` / `popup.js` | The settings popup and saved settings |
 | `major.css` | A copy of Convose's own CSS, for reference when writing selectors. It is not loaded by the extension. |
 | `AGENTS.md` | Technical notes on how Convose's page is built and how each style works |
+
+## Profile pictures
+
+Since 1.8 the extension no longer removes background pictures (profile banner, avatar, cover) when it colours big surfaces. Gradient layers are still flattened, but only on elements that do not have a picture.
 
 ## Known limits
 

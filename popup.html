@@ -3,364 +3,159 @@
 <head>
   <meta charset="utf-8">
   <style>
-    * {
-      box-sizing: border-box;
-    }
-    body {
-      width: 300px;
-      padding: 14px;
-      background: #111114;
-      color: #f3f4f6;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      font-size: 12.5px;
-      margin: 0;
-      user-select: none;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #26262e;
-    }
-    h3 {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 700;
-      color: #ff6b00;
-      letter-spacing: 0.2px;
-    }
-    .badge {
-      font-size: 10px;
-      font-weight: 600;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: #1f1f29;
-      color: #9ca3af;
-      border: 1px solid #2e2e3a;
-    }
-    .exp-badge {
-      font-size: 9px;
-      font-weight: 700;
-      padding: 1px 5px;
-      border-radius: 3px;
-      background: rgba(255, 107, 0, 0.16);
-      color: #ff6b00;
-      border: 1px solid rgba(255, 107, 0, 0.35);
-      margin-left: 4px;
-      vertical-align: middle;
-      letter-spacing: 0.4px;
-    }
-    .section-title {
-      font-size: 10.5px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: #9ca3af;
-      margin: 10px 0 6px 0;
-    }
-    .row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-      gap: 8px;
-    }
-    .row label {
-      color: #e5e7eb;
-      font-weight: 500;
-    }
-    select {
-      width: 155px;
-      padding: 5px 8px;
-      background: #1b1b22;
-      color: #f3f4f6;
-      border: 1px solid #32323f;
-      border-radius: 6px;
-      font-size: 12px;
-      outline: none;
-      cursor: pointer;
-    }
-    select:focus {
-      border-color: #ff6b00;
-    }
-    .preset-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 5px;
-      margin-bottom: 10px;
-    }
-    .preset-chip {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      padding: 5px 4px;
-      background: #1b1b22;
-      border: 1px solid #2d2d3a;
-      border-radius: 6px;
-      color: #d1d5db;
-      font-size: 10.5px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .preset-chip:hover {
-      border-color: #6b7280;
-      background: #23232d;
-    }
-    .preset-chip.active {
-      border-color: #ff6b00;
-      background: #291c14;
-      color: #ffffff;
-    }
-    .swatch-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    input[type="color"] {
-      border: 1px solid #32323f;
-      border-radius: 5px;
-      width: 34px;
-      height: 24px;
-      cursor: pointer;
-      background: #1b1b22;
-      padding: 1px;
-    }
-    input[type="checkbox"] {
-      width: 15px;
-      height: 15px;
-      accent-color: #ff6b00;
-      cursor: pointer;
-    }
-    .slider-wrap {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      width: 155px;
-    }
-    input[type="range"] {
-      flex: 1;
-      accent-color: #ff6b00;
-      cursor: pointer;
-    }
-    .slider-val {
-      font-size: 11px;
-      font-variant-numeric: tabular-nums;
-      color: #9ca3af;
-      min-width: 32px;
-      text-align: right;
-    }
-    hr {
-      border: 0;
-      border-top: 1px solid #24242c;
-      margin: 10px 0;
-    }
-    button#resetBtn {
-      width: 100%;
-      padding: 8px;
-      background: #1f1f27;
-      color: #f3f4f6;
-      border: 1px solid #32323f;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 12px;
-      transition: background 0.15s, border-color 0.15s;
-    }
-    button#resetBtn:hover {
-      background: #ff6b00;
-      border-color: #ff6b00;
-      color: #ffffff;
-    }
-    .status {
-      margin-top: 8px;
-      font-size: 11px;
-      color: #9ca3af;
-      text-align: center;
-    }
+*{box-sizing:border-box}
+body{width:340px;margin:0;background:#0e0e12;color:#f3f4f6;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:12.5px;user-select:none}
+.top{display:flex;align-items:center;gap:10px;padding:14px 14px 12px;background:linear-gradient(135deg,#1c1320,#0e0e12 70%);border-bottom:1px solid #23232c}
+.logo{width:30px;height:30px;border-radius:8px;background:#ff6b00;box-shadow:3px 3px 0 #000;display:grid;place-items:center;font-weight:800;color:#111;font-size:15px}
+.top h3{margin:0;font-size:14px;letter-spacing:.2px}
+.top small{display:block;color:#8b8b99;font-size:10.5px;margin-top:1px}
+.badge{margin-left:auto;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:#1f1f29;color:#a1a1b0;border:1px solid #2e2e3a}
+.wrap{padding:12px 14px 14px}
+.sec{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#8b8b99;margin:14px 0 7px}
+.sec:first-child{margin-top:0}
+.tabs{display:flex;gap:4px;background:#17171d;border:1px solid #25252f;padding:3px;border-radius:10px}
+.tab{flex:1;border:0;background:transparent;color:#a1a1b0;font-size:11px;font-weight:600;padding:6px 0;border-radius:7px;cursor:pointer}
+.tab:hover{color:#fff}.tab.on{background:#ff6b00;color:#111}
+.pane{display:none;margin-top:9px}.pane.on{display:block}
+.pane-note{color:#8b8b99;font-size:11px;margin-bottom:7px}
+.chips{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}
+.preset-chip{display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;padding:8px;background:#17171d;border:1px solid #2a2a35;border-radius:10px;color:#d9d9e3;font-size:11.5px;font-weight:600;cursor:pointer;transition:.12s}
+.preset-chip:hover{border-color:#5b5b6b;transform:translateY(-1px)}
+.preset-chip.active{border-color:#ff6b00;background:#25190f;color:#fff;box-shadow:0 0 0 1px #ff6b00}
+.sw{display:flex;border-radius:6px;overflow:hidden;width:100%;height:16px;border:1px solid rgba(255,255,255,.18)}
+.sw i{flex:1}
+.opt{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#17171d;border:1px solid #25252f;border-radius:10px;margin-bottom:6px;cursor:pointer}
+.opt-text{flex:1;display:flex;flex-direction:column;gap:1px}
+.opt-name{font-weight:600;color:#ececf3}.opt-name em{font-style:normal;font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:rgba(255,107,0,.16);color:#ff8a3d;border:1px solid rgba(255,107,0,.35);margin-left:4px}
+.opt-sub{font-size:10.5px;color:#7d7d8c}
+.opt input{display:none}
+.switch{width:32px;height:18px;border-radius:99px;background:#32323f;position:relative;flex-shrink:0;transition:.15s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.15s}
+.opt input:checked~.switch{background:#ff6b00}.opt input:checked~.switch::after{left:16px}
+.field{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.field label{color:#d9d9e3;font-weight:500}
+select{width:160px;padding:6px 8px;background:#17171d;color:#f3f4f6;border:1px solid #2a2a35;border-radius:8px;font-size:12px;outline:none}
+select:focus{border-color:#ff6b00}
+.slider{display:flex;align-items:center;gap:8px;width:160px}.slider input{flex:1;accent-color:#ff6b00}
+.slider-val{font-size:11px;color:#9a9aa8;min-width:32px;text-align:right;font-variant-numeric:tabular-nums}
+.colors{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.color{display:flex;align-items:center;gap:8px;padding:5px 8px;background:#17171d;border:1px solid #25252f;border-radius:8px;cursor:pointer;color:#cfcfda;font-size:11px}
+.color input{width:26px;height:22px;border:1px solid #32323f;border-radius:5px;background:#17171d;padding:1px;cursor:pointer}
+details{margin-top:12px;border:1px solid #25252f;border-radius:10px;background:#12121a}
+summary{cursor:pointer;padding:9px 10px;font-weight:700;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:#a1a1b0;list-style:none}
+summary::after{content:"+";float:right;color:#ff6b00;font-size:14px;line-height:12px}
+details[open] summary::after{content:"-"}
+.inner{padding:2px 10px 10px}
+button#resetBtn{width:100%;margin-top:12px;padding:9px;background:#17171d;color:#f3f4f6;border:1px solid #32323f;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px}
+button#resetBtn:hover{background:#ff6b00;border-color:#ff6b00;color:#111}
+.status{margin-top:8px;font-size:11px;color:#8b8b99;text-align:center}
   </style>
 </head>
 <body>
-  <div class="header">
-    <h3>Convose Customizer</h3>
-    <span class="badge">v1.6</span>
+  <div class="top">
+    <div class="logo">C</div>
+    <div><h3>Convose Customizer</h3><small>Themes and chat styles</small></div>
+    <span class="badge">v1.8.2</span>
   </div>
 
-  <div class="section-title">Theme Pack Presets</div>
-  <div class="row">
-    <label for="themePreset">Active Preset</label>
-    <select id="themePreset">
-      <option value="midnight-orange">Midnight Orange</option>
-      <option value="crimson-velvet">Crimson Velvet</option>
-      <option value="cyberpunk-neon">Cyberpunk Neon</option>
-      <option value="catppuccin-mocha">Catppuccin Mocha</option>
-      <option value="nord-frost">Nord Frost</option>
-      <option value="emerald-forest">Emerald Forest</option>
-      <option value="dracula-pro">Dracula Pro</option>
-      <option value="solarized-dark">Solarized Dark</option>
-      <option value="komanda-irc">Komanda IRC</option>
-      <option value="walnut-denim">Walnut and Denim (Retro)</option>
-      <option value="leather-brass">Leather and Brass (Retro)</option>
-      <option value="brushed-steel">Brushed Steel (Retro)</option>
-      <option value="sky-arcade">Sky Arcade (8-bit)</option>
-      <option value="castle-arcade">Castle Arcade (8-bit)</option>
-      <option value="cyber-hud">Cyber HUD (Cyan)</option>
-      <option value="night-city">Night City (Magenta)</option>
-      <option value="olive-union">Olive Union (Khaki)</option>
-      <option value="custom">Custom Colors</option>
-    </select>
-  </div>
-
-  <div class="preset-grid" id="presetQuickGrid">
-    <button type="button" class="preset-chip" data-preset="midnight-orange">
-      <span class="swatch-dot" style="background:#ff6b00"></span>Orange
-    </button>
-    <button type="button" class="preset-chip" data-preset="crimson-velvet">
-      <span class="swatch-dot" style="background:#e11d48"></span>Crimson
-    </button>
-    <button type="button" class="preset-chip" data-preset="cyberpunk-neon">
-      <span class="swatch-dot" style="background:#2859a9"></span>Cyber
-    </button>
-    <button type="button" class="preset-chip" data-preset="catppuccin-mocha">
-      <span class="swatch-dot" style="background:#cba6f7"></span>Mocha
-    </button>
-    <button type="button" class="preset-chip" data-preset="nord-frost">
-      <span class="swatch-dot" style="background:#88c0d0"></span>Nord
-    </button>
-    <button type="button" class="preset-chip" data-preset="emerald-forest">
-      <span class="swatch-dot" style="background:#10b981"></span>Emerald
-    </button>
-    <button type="button" class="preset-chip" data-preset="dracula-pro">
-      <span class="swatch-dot" style="background:#ff79c6"></span>Dracula
-    </button>
-    <button type="button" class="preset-chip" data-preset="komanda-irc">
-      <span class="swatch-dot" style="background:#5294e2"></span>IRC
-    </button>
-    <button type="button" class="preset-chip" data-preset="walnut-denim">
-      <span class="swatch-dot" style="background:#2f4a6b"></span>Denim
-    </button>
-    <button type="button" class="preset-chip" data-preset="leather-brass">
-      <span class="swatch-dot" style="background:#b8862e"></span>Brass
-    </button>
-    <button type="button" class="preset-chip" data-preset="brushed-steel">
-      <span class="swatch-dot" style="background:#8a8e94"></span>Steel
-    </button>
-    <button type="button" class="preset-chip" data-preset="sky-arcade">
-      <span class="swatch-dot" style="background:#5c94fc"></span>Sky
-    </button>
-    <button type="button" class="preset-chip" data-preset="castle-arcade">
-      <span class="swatch-dot" style="background:#8a2323"></span>Castle
-    </button>
-    <button type="button" class="preset-chip" data-preset="cyber-hud">
-      <span class="swatch-dot" style="background:#19f0ff"></span>HUD
-    </button>
-    <button type="button" class="preset-chip" data-preset="night-city">
-      <span class="swatch-dot" style="background:#ff2a6d"></span>City
-    </button>
-    <button type="button" class="preset-chip" data-preset="olive-union">
-      <span class="swatch-dot" style="background:#d2dc86"></span>Olive
-    </button>
-  </div>
-
-  <hr>
-
-  <div class="section-title">Layout &amp; Focus</div>
-  <div class="row">
-    <label for="hideGrid">Hide Suggestion Grid</label>
-    <input type="checkbox" id="hideGrid">
-  </div>
-  <div class="row">
-    <label for="fullScreenChat">Full-Screen Active Chat</label>
-    <input type="checkbox" id="fullScreenChat">
-  </div>
-  <div class="row">
-    <label for="hideSmartPrompts">Hide Chat Starter Chips</label>
-    <input type="checkbox" id="hideSmartPrompts">
-  </div>
-  <div class="row">
-    <label for="ircMode">IRC Chat Style <span class="exp-badge">EXP</span></label>
-    <input type="checkbox" id="ircMode">
-  </div>
-  <div class="row">
-    <label for="cyberMode">Cyber Style <span class="exp-badge">HUD</span></label>
-    <input type="checkbox" id="cyberMode">
-  </div>
-  <div class="row">
-    <label for="skeuoMode">Skeuomorphic Style <span class="exp-badge">RETRO</span></label>
-    <input type="checkbox" id="skeuoMode">
-  </div>
-  <div class="row">
-    <label for="arcadeMode">Arcade Style <span class="exp-badge">8-BIT</span></label>
-    <input type="checkbox" id="arcadeMode">
-  </div>
-  <div class="row">
-    <label for="cyberFx">Style FX (glow / textures)</label>
-    <input type="checkbox" id="cyberFx">
-  </div>
-
-  <hr>
-
-  <div class="section-title">Typography &amp; Shape</div>
-  <div class="row">
-    <label for="fontFamily">Font Family</label>
-    <select id="fontFamily">
-      <option value="default">Default (Nunito)</option>
-      <option value="inter">Inter (Clean Sans)</option>
-      <option value="plus-jakarta">Plus Jakarta Sans</option>
-      <option value="poppins">Poppins (Geometric)</option>
-      <option value="space-grotesk">Space Grotesk</option>
-      <option value="jetbrains-mono">JetBrains Mono</option>
-      <option value="lora">Lora (Editorial Serif)</option>
-      <option value="system">System UI Native</option>
-    </select>
-  </div>
-  <div class="row">
-    <label for="borderRadius">Corner Radius</label>
-    <div class="slider-wrap">
-      <input type="range" id="borderRadius" min="0" max="28" step="1">
-      <span id="borderRadiusVal" class="slider-val">12px</span>
+  <div class="wrap">
+    <div class="sec">Theme category</div>
+    <div class="tabs" id="catTabs"><button type="button" class="tab" data-cat="classic">Classic</button><button type="button" class="tab" data-cat="irc">IRC</button><button type="button" class="tab" data-cat="retro">Retro</button><button type="button" class="tab" data-cat="brutal">Brutal</button><button type="button" class="tab" data-cat="arcade">Arcade</button><button type="button" class="tab" data-cat="cyber">Cyber</button></div>
+    <div class="pane" data-pane="classic">
+      <div class="pane-note">Dark colour themes</div>
+      <div class="chips">
+        <button type="button" class="preset-chip" data-preset="midnight-orange" data-cat="classic"><span class="sw"><i style="background:#0a0a0a"></i><i style="background:#121212"></i><i style="background:#ff6b00"></i></span><span class="nm">Midnight Orange</span></button>
+        <button type="button" class="preset-chip" data-preset="crimson-velvet" data-cat="classic"><span class="sw"><i style="background:#160404"></i><i style="background:#220606"></i><i style="background:#e11d48"></i></span><span class="nm">Crimson Velvet</span></button>
+        <button type="button" class="preset-chip" data-preset="cyberpunk-neon" data-cat="classic"><span class="sw"><i style="background:#08090f"></i><i style="background:#0f111c"></i><i style="background:#2859a9"></i></span><span class="nm">Cyberpunk Neon</span></button>
+        <button type="button" class="preset-chip" data-preset="catppuccin-mocha" data-cat="classic"><span class="sw"><i style="background:#11111b"></i><i style="background:#181825"></i><i style="background:#cba6f7"></i></span><span class="nm">Catppuccin Mocha</span></button>
+        <button type="button" class="preset-chip" data-preset="nord-frost" data-cat="classic"><span class="sw"><i style="background:#242933"></i><i style="background:#2e3440"></i><i style="background:#88c0d0"></i></span><span class="nm">Nord Frost</span></button>
+        <button type="button" class="preset-chip" data-preset="emerald-forest" data-cat="classic"><span class="sw"><i style="background:#06140e"></i><i style="background:#0a1f17"></i><i style="background:#10b981"></i></span><span class="nm">Emerald Forest</span></button>
+        <button type="button" class="preset-chip" data-preset="dracula-pro" data-cat="classic"><span class="sw"><i style="background:#191a21"></i><i style="background:#21222c"></i><i style="background:#ff79c6"></i></span><span class="nm">Dracula Pro</span></button>
+        <button type="button" class="preset-chip" data-preset="solarized-dark" data-cat="classic"><span class="sw"><i style="background:#001e26"></i><i style="background:#002b36"></i><i style="background:#2aa198"></i></span><span class="nm">Solarized Dark</span></button>
+      </div>
     </div>
-  </div>
+    <div class="pane" data-pane="irc">
+      <div class="pane-note">Log-style lines, hacker sidebar</div>
+      <div class="chips">
+        <button type="button" class="preset-chip" data-preset="komanda-irc" data-cat="irc"><span class="sw"><i style="background:#1d2328"></i><i style="background:#283037"></i><i style="background:#5294e2"></i></span><span class="nm">Komanda IRC</span></button>
+      </div>
+    </div>
+    <div class="pane" data-pane="retro">
+      <div class="pane-note">Wood, denim, leather, metal</div>
+      <div class="chips">
+        <button type="button" class="preset-chip" data-preset="walnut-denim" data-cat="retro"><span class="sw"><i style="background:#4a2c19"></i><i style="background:#2f4a6b"></i><i style="background:#2d7be0"></i></span><span class="nm">Walnut Denim</span></button>
+        <button type="button" class="preset-chip" data-preset="leather-brass" data-cat="retro"><span class="sw"><i style="background:#2e2016"></i><i style="background:#5a3a22"></i><i style="background:#b8862e"></i></span><span class="nm">Leather Brass</span></button>
+        <button type="button" class="preset-chip" data-preset="brushed-steel" data-cat="retro"><span class="sw"><i style="background:#5d6065"></i><i style="background:#4a4d52"></i><i style="background:#3b7fd6"></i></span><span class="nm">Brushed Steel</span></button>
+      </div>
+    </div>
+    <div class="pane" data-pane="brutal">
+      <div class="pane-note">Flat colour, thick outlines</div>
+      <div class="chips">
+        <button type="button" class="preset-chip" data-preset="gumroad-pink" data-cat="brutal"><span class="sw"><i style="background:#f4f1ea"></i><i style="background:#ffc900"></i><i style="background:#ffc900"></i></span><span class="nm">Gumroad Pink</span></button>
+        <button type="button" class="preset-chip" data-preset="taxi-brutal" data-cat="brutal"><span class="sw"><i style="background:#faf7f0"></i><i style="background:#f8f5ee"></i><i style="background:#f7b900"></i></span><span class="nm">Taxi Yellow</span></button>
+        <button type="button" class="preset-chip" data-preset="mint-brutal" data-cat="brutal"><span class="sw"><i style="background:#e6f6ec"></i><i style="background:#5ee6a0"></i><i style="background:#5ee6a0"></i></span><span class="nm">Mint</span></button>
+        <button type="button" class="preset-chip" data-preset="lilac-brutal" data-cat="brutal"><span class="sw"><i style="background:#efeaff"></i><i style="background:#8b7bff"></i><i style="background:#8b7bff"></i></span><span class="nm">Lilac</span></button>
+        <button type="button" class="preset-chip" data-preset="sky-brutal" data-cat="brutal"><span class="sw"><i style="background:#e8f3ff"></i><i style="background:#4aa8ff"></i><i style="background:#ffd23f"></i></span><span class="nm">Blue Sky</span></button>
+        <button type="button" class="preset-chip" data-preset="tangerine-brutal" data-cat="brutal"><span class="sw"><i style="background:#fff1e0"></i><i style="background:#ff8a3d"></i><i style="background:#ff8a3d"></i></span><span class="nm">Tangerine</span></button>
+        <button type="button" class="preset-chip" data-preset="ink-brutal" data-cat="brutal"><span class="sw"><i style="background:#f4f1ea"></i><i style="background:#2b2b2b"></i><i style="background:#111111"></i></span><span class="nm">Ink Black</span></button>
+      </div>
+    </div>
+    <div class="pane" data-pane="arcade">
+      <div class="pane-note">8-bit bricks and pixels</div>
+      <div class="chips">
+        <button type="button" class="preset-chip" data-preset="sky-arcade" data-cat="arcade"><span class="sw"><i style="background:#5c94fc"></i><i style="background:#b5502b"></i><i style="background:#fbd000"></i></span><span class="nm">Sky Arcade</span></button>
+        <button type="button" class="preset-chip" data-preset="castle-arcade" data-cat="arcade"><span class="sw"><i style="background:#3b3b46"></i><i style="background:#8a2323"></i><i style="background:#ff9a1f"></i></span><span class="nm">Castle Arcade</span></button>
+      </div>
+    </div>
+    <div class="pane" data-pane="cyber">
+      <div class="pane-note">Neon HUD, sci-fi panels</div>
+      <div class="chips">
+        <button type="button" class="preset-chip" data-preset="cyber-hud" data-cat="cyber"><span class="sw"><i style="background:#04080a"></i><i style="background:#060d10"></i><i style="background:#19f0ff"></i></span><span class="nm">Cyber HUD</span></button>
+        <button type="button" class="preset-chip" data-preset="night-city" data-cat="cyber"><span class="sw"><i style="background:#0a0508"></i><i style="background:#10080d"></i><i style="background:#ff2a6d"></i></span><span class="nm">Night City</span></button>
+        <button type="button" class="preset-chip" data-preset="olive-union" data-cat="cyber"><span class="sw"><i style="background:#0e110c"></i><i style="background:#12160f"></i><i style="background:#d2dc86"></i></span><span class="nm">Olive Union</span></button>
+      </div>
+    </div>
+    <div hidden><select id="themePreset"><option value="midnight-orange">Midnight Orange</option><option value="crimson-velvet">Crimson Velvet</option><option value="cyberpunk-neon">Cyberpunk Neon</option><option value="catppuccin-mocha">Catppuccin Mocha</option><option value="nord-frost">Nord Frost</option><option value="emerald-forest">Emerald Forest</option><option value="dracula-pro">Dracula Pro</option><option value="solarized-dark">Solarized Dark</option><option value="komanda-irc">Komanda IRC</option><option value="walnut-denim">Walnut Denim</option><option value="leather-brass">Leather Brass</option><option value="brushed-steel">Brushed Steel</option><option value="gumroad-pink">Gumroad Pink</option><option value="taxi-brutal">Taxi Yellow</option><option value="mint-brutal">Mint</option><option value="lilac-brutal">Lilac</option><option value="sky-brutal">Blue Sky</option><option value="tangerine-brutal">Tangerine</option><option value="ink-brutal">Ink Black</option><option value="sky-arcade">Sky Arcade</option><option value="castle-arcade">Castle Arcade</option><option value="cyber-hud">Cyber HUD</option><option value="night-city">Night City</option><option value="olive-union">Olive Union</option><option value="custom">Custom Colors</option></select></div>
 
-  <hr>
+    <div class="sec">Chat style</div>
+    <label class="opt"><span class="opt-text"><span class="opt-name">IRC Chat Style <em>EXP</em></span><span class="opt-sub">Log lines like [21:03] nick: text</span></span><input type="checkbox" id="ircMode"><span class="switch"></span></label>
+    <label class="opt"><span class="opt-text"><span class="opt-name">Cyber Style <em>HUD</em></span><span class="opt-sub">Neon HUD, angled bubbles</span></span><input type="checkbox" id="cyberMode"><span class="switch"></span></label>
+    <label class="opt"><span class="opt-text"><span class="opt-name">Skeuomorphic Style <em>RETRO</em></span><span class="opt-sub">Wood, denim, leather, glossy</span></span><input type="checkbox" id="skeuoMode"><span class="switch"></span></label>
+    <label class="opt"><span class="opt-text"><span class="opt-name">Arcade Style <em>8-BIT</em></span><span class="opt-sub">Bright 8-bit blocks</span></span><input type="checkbox" id="arcadeMode"><span class="switch"></span></label>
+    <label class="opt"><span class="opt-text"><span class="opt-name">Neo-Brutal Style <em>BOLD</em></span><span class="opt-sub">Flat colour, thick outlines</span></span><input type="checkbox" id="brutalMode"><span class="switch"></span></label>
+    <label class="opt"><span class="opt-text"><span class="opt-name">Style FX</span><span class="opt-sub">Glow, scanlines, textures (turn off for speed)</span></span><input type="checkbox" id="cyberFx"><span class="switch"></span></label>
 
-  <div class="section-title">Palette Colors</div>
-  <div class="row">
-    <label for="bgColor">Main Background</label>
-    <input type="color" id="bgColor">
-  </div>
-  <div class="row">
-    <label for="sidebarColor">Sidebar Background</label>
-    <input type="color" id="sidebarColor">
-  </div>
-  <div class="row">
-    <label for="cardColor">Chat Box Background</label>
-    <input type="color" id="cardColor">
-  </div>
-  <div class="row">
-    <label for="bubbleColor">Message Bubble</label>
-    <input type="color" id="bubbleColor">
-  </div>
-  <div class="row">
-    <label for="accentColor">Primary Accent</label>
-    <input type="color" id="accentColor">
-  </div>
-  <div class="row">
-    <label for="secondaryColor">Own Messages (Cyber/Retro)</label>
-    <input type="color" id="secondaryColor">
-  </div>
-  <div class="row">
-    <label for="textColor">Text Color</label>
-    <input type="color" id="textColor">
-  </div>
+    <div class="sec">Layout</div>
+    <label class="opt"><span class="opt-text"><span class="opt-name">Hide Suggestion Grid</span><span class="opt-sub">Removes the suggestion cards</span></span><input type="checkbox" id="hideGrid"><span class="switch"></span></label>
+    <label class="opt"><span class="opt-text"><span class="opt-name">Full-Screen Active Chat</span><span class="opt-sub">Open chats fill the screen</span></span><input type="checkbox" id="fullScreenChat"><span class="switch"></span></label>
+    <label class="opt"><span class="opt-text"><span class="opt-name">Hide Chat Starter Chips</span><span class="opt-sub">Removes the starter bar</span></span><input type="checkbox" id="hideSmartPrompts"><span class="switch"></span></label>
 
-  <hr>
-  <button id="resetBtn">Reset to Default</button>
-  <div id="statusText" class="status">Ready</div>
+    <details>
+      <summary>Typography and shape</summary>
+      <div class="inner">
+        <div class="field"><label for="fontFamily">Font</label>
+          <select id="fontFamily"><option value="default">Default (Nunito)</option><option value="inter">Inter</option><option value="plus-jakarta">Plus Jakarta Sans</option><option value="poppins">Poppins</option><option value="space-grotesk">Space Grotesk</option><option value="jetbrains-mono">JetBrains Mono</option><option value="lora">Lora (Serif)</option><option value="system">System UI</option></select></div>
+        <div class="field"><label for="borderRadius">Corner radius</label>
+          <div class="slider"><input type="range" id="borderRadius" min="0" max="28" step="1"><span id="borderRadiusVal" class="slider-val">12px</span></div></div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Custom colors</summary>
+      <div class="inner"><div class="colors">
+      <label class="color" for="bgColor"><input type="color" id="bgColor"><span>Background</span></label>
+      <label class="color" for="sidebarColor"><input type="color" id="sidebarColor"><span>Sidebar</span></label>
+      <label class="color" for="cardColor"><input type="color" id="cardColor"><span>Chat box</span></label>
+      <label class="color" for="bubbleColor"><input type="color" id="bubbleColor"><span>Bubble</span></label>
+      <label class="color" for="accentColor"><input type="color" id="accentColor"><span>Accent</span></label>
+      <label class="color" for="secondaryColor"><input type="color" id="secondaryColor"><span>Own msgs</span></label>
+      <label class="color" for="textColor"><input type="color" id="textColor"><span>Text</span></label>
+      </div></div>
+    </details>
+
+    <button id="resetBtn">Reset to Default</button>
+    <div id="statusText" class="status">Ready</div>
+  </div>
 
   <script src="popup.js"></script>
 </body>

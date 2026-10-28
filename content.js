@@ -8,6 +8,7 @@
     cyberMode: false,
     skeuoMode: false,
     arcadeMode: false,
+    brutalMode: false,
     cyberFx: true,
     bgColor: "#0a0a0a",
     sidebarColor: "#121212",
@@ -40,6 +41,7 @@
     "lora": "https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&display=swap",
     "cyber": "https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap",
     "skeuo": "https://fonts.googleapis.com/css2?family=Pacifico&display=swap",
+    "brutal": "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap",
     "arcade": "https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@600;700;800&display=swap"
   };
 
@@ -51,6 +53,7 @@
   function activeMode(s) {
     if (s.skeuoMode) return "skeuo";
     if (s.arcadeMode) return "arcade";
+    if (s.brutalMode) return "brutal";
     if (s.cyberMode) return "cyber";
     if (s.ircMode) return "irc";
     return "";
@@ -249,8 +252,20 @@
     [data-chatbox],
     [data-chatbox] .bg-card-bg,
     [data-suggestion-card] {
-      background: ${settings.cardColor} !important;
       background-color: ${settings.cardColor} !important;
+    }
+
+    /* Flatten gradient layers on the big surfaces, but never wipe a picture (banner, avatar, cover) */
+    .bg-card-bg:not([style*="url("]):not([class*="url("]):not(.bg-cover):not(.bg-contain),
+    .bg-chat-message-list-bg,
+    .bg-group-card-chat-screen-bg,
+    .bg-user-card-chat-open-bg,
+    [data-component="my-account"],
+    [data-component="paid-plans-page"],
+    [data-component="group-card-header"],
+    [data-chatbox],
+    [data-suggestion-card] {
+      background-image: none;
     }
 
     /* Remove Bright Blue Border on Active/Selected Chat Box */
@@ -275,9 +290,9 @@
       border-color: ${subtleBorder} !important;
     }
 
-    [data-component="my-banner"]:not([style*="background-image"]),
-    [data-component="profile-banner"]:not([style*="background-image"]),
-    [data-component="group-banner"]:not([style*="background-image"]) {
+    [data-component="my-banner"]:not([style*="background-image"]):not([style*="url("]):not([class*="url("]):not([class*="bg-["]):not(.bg-cover):not(:has(img)),
+    [data-component="profile-banner"]:not([style*="background-image"]):not([style*="url("]):not([class*="url("]):not([class*="bg-["]):not(.bg-cover):not(:has(img)),
+    [data-component="group-banner"]:not([style*="background-image"]):not([style*="url("]):not([class*="url("]):not([class*="bg-["]):not(.bg-cover):not(:has(img)) {
       background: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.6px) 0 0 / 14px 14px,
         linear-gradient(135deg, ${settings.bubbleColor} 0%, ${settings.cardColor} 100%) !important;
     }
@@ -1039,6 +1054,8 @@
     ${activeMode(settings) === "skeuo" ? buildSkeuoCss(settings, fontStack) : ""}
 
     ${activeMode(settings) === "arcade" ? buildArcadeCss(settings, fontStack) : ""}
+
+    ${activeMode(settings) === "brutal" ? buildBrutalCss(settings, fontStack) : ""}
   `;
   }
 
@@ -1488,18 +1505,18 @@
       }
 
       [data-msg-bubble="true"] {
-        --msg-reply-text-color: ${INK} !important;
+        --msg-reply-text-color: ${T} !important;
       }
 
       [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] {
-        --msg-reply-text-color: #ffffff !important;
+        --msg-reply-text-color: ${T} !important;
       }
 
       [data-msg-bubble="true"] [data-msg-transcript],
       [data-msg-bubble="true"] [data-msg-transcript] *,
       [data-msg-bubble="true"] .text-msg-reply-text-color,
       [data-msg-bubble="true"] .text-msg-reply-text-color * {
-        color: ${INK} !important;
+        color: ${T} !important;
         text-shadow: none !important;
       }
 
@@ -1507,7 +1524,7 @@
       [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] [data-msg-transcript] *,
       [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] .text-msg-reply-text-color,
       [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] .text-msg-reply-text-color * {
-        color: #ffffff !important;
+        color: ${T} !important;
       }
 
       .audio-seek {
@@ -1862,6 +1879,16 @@
        secondaryColor = own bubble, textColor = ink on paper
      ============================================================= */
 
+  // Darken a #rrggbb colour by pct percent (used to estimate the colour under text).
+  function darkenHex(hex, pct) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
+    if (!m) return "#222222";
+    const n = parseInt(m[1], 16);
+    const f = 1 - pct / 100;
+    const ch = (v) => Math.round(v * f).toString(16).padStart(2, "0");
+    return "#" + ch((n >> 16) & 255) + ch((n >> 8) & 255) + ch(n & 255);
+  }
+
   function buildSkeuoCss(settings, fontStack) {
     const BG = settings.bgColor;
     const SIDE = settings.sidebarColor;
@@ -1872,7 +1899,14 @@
     const INK = settings.textColor;
     const fx = settings.cyberFx !== false;
 
+    // Sidebar text follows the brightness of the denim under the pressed-in slots
+    const slotBg = darkenHex(SIDE, 24);
+    const sideLight = inkOn(slotBg) === "#ffffff";
     const cream = "#f4ead2";
+    const sideCream = sideLight ? "#f4ead2" : "#1d1a14";
+    const sideBright = sideLight ? "#fff6dc" : "#111111";
+    const sideShadow = sideLight ? "rgba(0, 0, 0, 0.65)" : "rgba(255, 255, 255, 0.55)";
+    const hoverInk = inkOn(A);
     const tone = (c, w) => `color-mix(in srgb, ${c}, white ${w}%)`;
     const shade = (c, b) => `color-mix(in srgb, ${c}, black ${b}%)`;
     const rgba = (c, pct) => `color-mix(in srgb, ${c} ${pct}%, transparent)`;
@@ -2214,6 +2248,29 @@
         color: ${INK} !important;
       }
 
+      [data-msg-bubble="true"] {
+        --msg-reply-text-color: ${INK} !important;
+      }
+
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] {
+        --msg-reply-text-color: #ffffff !important;
+      }
+
+      [data-msg-bubble="true"] [data-msg-transcript],
+      [data-msg-bubble="true"] [data-msg-transcript] *,
+      [data-msg-bubble="true"] .text-msg-reply-text-color,
+      [data-msg-bubble="true"] .text-msg-reply-text-color * {
+        color: ${INK} !important;
+        text-shadow: none !important;
+      }
+
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] [data-msg-transcript],
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] [data-msg-transcript] *,
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] .text-msg-reply-text-color,
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] .text-msg-reply-text-color * {
+        color: #ffffff !important;
+      }
+
       .audio-seek {
         --audio-fill: ${A} !important;
         --audio-rest: rgba(0, 0, 0, 0.22) !important;
@@ -2336,8 +2393,8 @@
       }
 
       aside[data-component="sidebar"] {
-        color: ${cream};
-        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.65);
+        color: ${sideCream};
+        text-shadow: 0 ${sideLight ? "-1px" : "1px"} 0 ${sideShadow};
       }
 
       aside[data-component="sidebar"] * {
@@ -2349,12 +2406,15 @@
       html aside[data-component="sidebar"] article.group\\/row.group\\/row div,
       html aside[data-component="sidebar"] article.group\\/row.group\\/row p,
       html aside[data-component="sidebar"] [data-interest-chip] span,
-      html aside[data-component="sidebar"] [data-interest-chip] div {
-        color: #fff6dc !important;
+      html aside[data-component="sidebar"] [data-interest-chip] div,
+      html aside[data-component="sidebar"]:not(#sk) [data-interest-chip],
+      html aside[data-component="sidebar"]:not(#sk) > div.mb-\\[7px\\] > :is(button, a),
+      html aside[data-component="sidebar"]:not(#sk) > div.mb-\\[7px\\] > :is(button, a) * {
+        color: ${sideBright} !important;
       }
 
       html aside[data-component="sidebar"] article.group\\/row.group\\/row .text-\\[14px\\].font-bold {
-        color: #ffffff !important;
+        color: ${sideLight ? "#ffffff" : "#000000"} !important;
         font-weight: 700 !important;
       }
 
@@ -2364,7 +2424,7 @@
         letter-spacing: 0.1em !important;
         font-size: 10.5px !important;
         font-weight: 700 !important;
-        color: rgba(240, 226, 190, 0.7) !important;
+        color: ${sideLight ? "rgba(240, 226, 190, 0.78)" : "rgba(17, 17, 17, 0.75)"} !important;
       }
 
       aside[data-component="sidebar"] article.group\\/row,
@@ -2384,9 +2444,13 @@
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 3px rgba(0, 0, 0, 0.55) !important;
       }
 
-      aside[data-component="sidebar"] article.group\\/row:hover *,
-      aside[data-component="sidebar"] [data-interest-chip]:hover * {
-        color: #ffffff !important;
+      html aside[data-component="sidebar"]:not(#sk) article.group\\/row:hover *,
+      html aside[data-component="sidebar"]:not(#sk) [data-interest-chip]:hover,
+      html aside[data-component="sidebar"]:not(#sk) [data-interest-chip]:hover *,
+      html aside[data-component="sidebar"]:not(#sk) > div.mb-\\[7px\\] > :is(button, a):hover,
+      html aside[data-component="sidebar"]:not(#sk) > div.mb-\\[7px\\] > :is(button, a):hover * {
+        color: ${hoverInk} !important;
+        text-shadow: none !important;
       }
 
       /* Metal pill buttons (+ Add interests, Upgrade) */
@@ -2827,6 +2891,280 @@
   }
 
 
+  /* =============================================================
+     NEO-BRUTALIST STYLE (settings.brutalMode): flat cream page, thick black
+     outlines, hard offset shadows, bold condensed headings, bright flat colours
+     (yellow, pink, teal). Built on the arcade layer, then re-coloured for
+     light panels with dark text. No textures, no overlay nodes, no filters.
+     Palette: bgColor = page, sidebarColor = sidebar, cardColor = chat panel,
+     bubbleColor = other bubbles, accentColor = headers/buttons,
+     secondaryColor = own bubbles and hover, textColor = ink.
+     ============================================================= */
+
+  // Pick black or white text for a background colour (whichever has more contrast).
+  function inkOn(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
+    if (!m) return "#111111";
+    const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    const n = parseInt(m[1], 16);
+    const L = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+    const darkText = (L + 0.05) / 0.05;      // contrast of black text
+    const lightText = 1.05 / (L + 0.05);     // contrast of white text
+    return darkText >= lightText ? "#111111" : "#ffffff";
+  }
+
+  function buildBrutalCss(rawSettings, fontStack) {
+    // Text colours follow the surface they sit on, so bright colours always get dark text.
+    const settings = { ...rawSettings, textColor: inkOn(rawSettings.bubbleColor) };
+    const iA = inkOn(settings.accentColor);
+    const iS = inkOn(settings.secondaryColor || "#ff90e8");
+    const iP = inkOn(settings.bubbleColor);
+    const iSide = inkOn(settings.sidebarColor);
+    const SIDE = settings.sidebarColor;
+    const A = settings.accentColor;
+    const S = settings.secondaryColor || "#ff90e8";
+    const K = "#111111";
+    const head = `"Bebas Neue", "Impact", "Arial Narrow", sans-serif`;
+    const mono = `"Space Mono", "Courier New", monospace`;
+    const body = settings.fontFamily === "default" ? `"Space Grotesk", "Segoe UI", Arial, sans-serif` : fontStack;
+    const base = buildArcadeCss(settings, body);
+    const gridSlot = `[data-component="suggestions-grid"] > div:not(.fixed) > div.relative.block.size-full > div[data-chat-id]`;
+
+    return base + `
+      /* ===== Neo-brutalist layer ===== */
+
+      html body,
+      [data-component="suggestions-grid"] {
+        background-image: radial-gradient(rgba(0, 0, 0, 0.16) 1px, transparent 1.3px) !important;
+        background-size: 18px 18px !important;
+      }
+
+      ${gridSlot} {
+        border-radius: 6px !important;
+        box-shadow: 0 0 0 2px ${K}, 6px 6px 0 2px ${K} !important;
+      }
+
+      ${gridSlot}.bg-modal-input-border-focus-color {
+        box-shadow: 0 0 0 2px ${K}, 0 0 0 6px ${A}, 0 0 0 8px ${K}, 8px 8px 0 8px ${K} !important;
+      }
+
+      html [data-chatbox] [data-component="group-card-header"],
+      html [data-chatbox] header {
+        border-bottom: 2px solid ${K} !important;
+        box-shadow: none !important;
+        border-radius: 4px 4px 0 0 !important;
+      }
+
+      [data-chatbox] [data-component="group-card-header"]::before,
+      [data-chatbox] header::before { background: none !important; }
+
+      html [data-chatbox] [data-component="group-card-header"] p,
+      html [data-chatbox] header [data-cy-title] {
+        font-family: ${head} !important;
+        font-size: 20px !important;
+        line-height: 1.1 !important;
+        letter-spacing: 0.03em !important;
+        text-transform: uppercase !important;
+      }
+
+      html [data-chatbox] header img { border-radius: 50% !important; box-shadow: 0 0 0 2px ${K} !important; }
+
+      [data-chatbox] .bg-chat-message-list-bg,
+      [data-chatbox] .bg-group-card-chat-screen-bg {
+        background: radial-gradient(rgba(0, 0, 0, 0.09) 1px, transparent 1.3px) 0 0 / 16px 16px, ${settings.cardColor} !important;
+      }
+
+      html [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+        border: 2px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+      }
+
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+        border-color: ${K} !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+      }
+
+      /* Dark text on every bubble (pink and white are both light) */
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block,
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block span,
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] [data-msg-transcript],
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] [data-msg-transcript] *,
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] .text-msg-reply-text-color,
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] .text-msg-reply-text-color * {
+        color: ${iS} !important;
+        text-shadow: none !important;
+      }
+
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] { --msg-reply-text-color: ${iS} !important; }
+      html [data-msg-row]:not([data-irc-mine="true"]) [data-msg-bubble="true"],
+      html [data-msg-row]:not([data-irc-mine="true"]) [data-msg-bubble="true"] :is(div.block, div.block span, span, p, [data-msg-transcript], .text-msg-reply-text-color, .text-msg-reply-text-color *, [data-msg-transcript] *) {
+        --msg-reply-text-color: ${iP};
+        color: ${iP} !important;
+      }
+
+      html [data-msg-row]:not([data-irc-mine="true"]) [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before { color: ${iP}; }
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before { color: ${iS}; }
+
+      html [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before,
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before {
+        font-family: ${mono};
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        text-shadow: none;
+        opacity: 0.8;
+      }
+
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] a { color: ${iS} !important; }
+      html [data-msg-row] [data-msg-bubble="true"] a { color: ${iP} !important; text-decoration: underline !important; font-weight: 700 !important; }
+
+      .audio-seek { --audio-fill: ${K} !important; --audio-rest: rgba(0, 0, 0, 0.25) !important; }
+      html [data-msg-row][data-irc-mine="true"] .audio-seek { --audio-fill: ${K} !important; --audio-rest: rgba(0, 0, 0, 0.25) !important; }
+
+      /* Sidebar: flat panel, white blocks, black text */
+      html aside[data-component="sidebar"] {
+        background-image: radial-gradient(rgba(0, 0, 0, 0.16) 1px, transparent 1.3px) !important;
+        background-size: 18px 18px !important;
+        border-right: 2px solid ${K} !important;
+        color: ${K};
+        text-shadow: none;
+      }
+
+      aside[data-component="sidebar"] article.group\\/row,
+      aside[data-component="sidebar"] [data-interest-chip],
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a {
+        background-color: #ffffff !important;
+        border: 2px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+      }
+
+      aside[data-component="sidebar"] article.group\\/row:hover,
+      aside[data-component="sidebar"] [data-interest-chip]:hover,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button:hover,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a:hover {
+        background-color: ${S} !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+      }
+
+      html body aside[data-component="sidebar"] article.group\\/row.group\\/row :is(span, div, p),
+      html body aside[data-component="sidebar"] [data-interest-chip] :is(span, div),
+      html body aside[data-component="sidebar"] > div.mb-\\[7px\\] > :is(button, a),
+      html body aside[data-component="sidebar"] > div.mb-\\[7px\\] > :is(button, a) * {
+        color: ${K} !important;
+        text-shadow: none !important;
+      }
+
+      html body aside[data-component="sidebar"] > div.-mb-0\\.5.mt-1\\.5 > p,
+      html body aside[data-component="sidebar"] section > div.-mb-0\\.5 > span {
+        font-family: ${head} !important;
+        font-size: 17px !important;
+        letter-spacing: 0.04em !important;
+        color: ${K} !important;
+      }
+
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 {
+        background-color: #ffffff !important;
+        border-top: 2px solid ${K} !important;
+      }
+
+      html body aside[data-component="sidebar"] > div.absolute.bottom-2 :is(span, p, div) {
+        color: ${K} !important;
+        text-shadow: none !important;
+      }
+
+      html [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]),
+      aside[data-component="sidebar"] [data-component="add-interest-input"],
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a) {
+        border: 2px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+        background-color: ${A} !important;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+
+      aside[data-component="sidebar"] [data-cy-badge] {
+        color: ${K} !important;
+        background-color: ${S} !important;
+        border: 2px solid ${K} !important;
+        border-radius: 50% !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+      }
+
+      .bg-call-screen-inchat-bg,
+      .dark\\:bg-call-screen-inchat-bg {
+        background: ${K} !important;
+        border: 2px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 4px 4px 0 ${K} !important;
+      }
+
+      html body aside[data-component="sidebar"]:not(#bk) article.group\\/row *,
+      html body aside[data-component="sidebar"]:not(#bk) [data-interest-chip],
+      html body aside[data-component="sidebar"]:not(#bk) [data-interest-chip] *,
+      html body aside[data-component="sidebar"]:not(#bk) > div.absolute.bottom-2,
+      html body aside[data-component="sidebar"]:not(#bk) > div.absolute.bottom-2 * {
+        color: ${K} !important;
+        text-shadow: none !important;
+      }
+
+      html body [data-chatbox] button[class*="bg-[#C54445" i],
+      html body [data-chatbox] button[class*="bg-[#e5484d" i],
+      html body [data-chatbox] button[class*="bg-[#C54445" i] * {
+        color: ${K} !important;
+        text-shadow: none !important;
+      }
+
+      /* Auto contrast: text colour follows the colour it sits on */
+      html body [data-chatbox] [data-component="group-card-header"] p,
+      html body [data-chatbox] header [data-cy-title],
+      html body [data-chatbox] header button,
+      html body [data-chatbox] header svg {
+        color: ${iA} !important;
+      }
+
+      html body [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]),
+      html body [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]) *,
+      html body aside[data-component="sidebar"]:not(#bk) [data-component="add-interest-input"],
+      html body aside[data-component="sidebar"]:not(#bk) [data-component="add-interest-input"] *,
+      html body aside[data-component="sidebar"]:not(#bk) > div.absolute.bottom-2 :is(button, a),
+      html body aside[data-component="sidebar"]:not(#bk) > div.absolute.bottom-2 :is(button, a) * {
+        color: ${iA} !important;
+      }
+
+      html body [data-chatbox] button[class*="bg-[#C54445" i],
+      html body [data-chatbox] button[class*="bg-[#e5484d" i],
+      html body [data-chatbox] button[class*="bg-[#C54445" i] * {
+        color: ${iS} !important;
+      }
+
+      html body aside[data-component="sidebar"]:not(#bk) article.group\\/row:hover *,
+      html body aside[data-component="sidebar"]:not(#bk) [data-interest-chip]:hover,
+      html body aside[data-component="sidebar"]:not(#bk) [data-interest-chip]:hover *,
+      html body aside[data-component="sidebar"]:not(#bk) > div.mb-\\[7px\\] > :is(button, a):hover,
+      html body aside[data-component="sidebar"]:not(#bk) > div.mb-\\[7px\\] > :is(button, a):hover * {
+        color: ${iS} !important;
+      }
+
+      html body aside[data-component="sidebar"]:not(#bk) > div.-mb-0\\.5.mt-1\\.5 > p,
+      html body aside[data-component="sidebar"]:not(#bk) section > div.-mb-0\\.5 > span {
+        color: ${iSide} !important;
+      }
+
+      html body aside[data-component="sidebar"] [data-cy-badge] { color: ${iS} !important; }
+
+      .bg-buble-reacted-bg, [data-msg-reactions].bg-buble-reacted-bg {
+        background: ${S} !important;
+        color: ${iS} !important;
+        border: 2px solid ${K} !important;
+      }
+    `;
+  }
+
+
   // Textures are plain CSS gradients now (cheap to paint). No SVG filters are used.
   function skeuoDefsMarkup() {
     return "";
@@ -2889,7 +3227,7 @@
     const mode = activeMode(currentSettings);
     if (!mode) return;
     // Cyber and skeuo styles both use the per-bubble tag attributes
-    const cyber = mode === "cyber" || mode === "skeuo" || mode === "arcade";
+    const cyber = mode === "cyber" || mode === "skeuo" || mode === "arcade" || mode === "brutal";
 
     const myInput = document.querySelector('[data-component="my-username"]');
     const myName = (myInput && myInput.value && myInput.value.trim()) ? myInput.value.trim() : "you";
@@ -3001,7 +3339,7 @@
   // Only attributes are touched, never DOM nodes.
   function syncCyberTags() {
     const mode = activeMode(currentSettings);
-    if (mode !== "cyber" && mode !== "skeuo" && mode !== "arcade") {
+    if (mode !== "cyber" && mode !== "skeuo" && mode !== "arcade" && mode !== "brutal") {
       document.querySelectorAll("[data-cy-title]").forEach((el) => el.removeAttribute("data-cy-title"));
       document.querySelectorAll("[data-cy-badge]").forEach((el) => el.removeAttribute("data-cy-badge"));
       return;
@@ -3176,6 +3514,7 @@
       const fontKey = (mode === "cyber" && useDefaultFont) ? "cyber"
         : (mode === "skeuo" && useDefaultFont) ? "skeuo"
         : (mode === "arcade" && useDefaultFont) ? "arcade"
+        : (mode === "brutal" && useDefaultFont) ? "brutal"
         : (mode === "irc" && useDefaultFont) ? "jetbrains-mono"
         : currentSettings.fontFamily;
       ensureGoogleFont(fontKey);

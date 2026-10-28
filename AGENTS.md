@@ -244,3 +244,16 @@ Retro "real objects" look (denim, leather, paper, wood, brushed metal, glossy bu
 ## 4d. Experimental View: Arcade Style (`settings.arcadeMode`)
 
 8-bit game look. `buildArcadeCss()` in `content.js` returns `buildSkeuoCss({...settings, cyberFx:false})` (same layout hooks, no textures) plus a flattening layer: thick `#1a1a1a` outlines, hard offset shadows, no gradients, gold buttons, brick-block sidebar made from gradients, Press Start 2P for labels only. Priority: skeuo > arcade > cyber > irc. It reuses the `data-cy-*` and `data-irc-mine` attributes. No overlay nodes. The popup makes four mode checkboxes mutually exclusive and resets all mode flags when a preset is applied.
+
+
+## 4e. Experimental View: Neo-Brutal Style (`settings.brutalMode`)
+
+`buildBrutalCss()` returns `buildArcadeCss()` plus a re-colouring layer: dot-grid page, 2px black outlines, 3px hard shadows, Bebas Neue titles, black text on all light surfaces. Priority: skeuo > arcade > brutal > cyber > irc. Sidebar text colours use `:not(#bk)` to gain id-level specificity over Convose's and the skeuo layer's `!important` white rules, and the chip and the bottom bar are targeted themselves (their text is often a direct text node, not a child). No overlay nodes.
+
+Auto contrast: `inkOn(hex)` (WCAG luminance) picks `#111111` or `#ffffff` for header, buttons, own and other bubbles, sidebar labels and hover. `buildBrutalCss` passes `textColor = inkOn(bubbleColor)` to the arcade/skeuo layers; the base block still uses the raw `textColor`, so bubble text is re-forced with a higher-specificity `:is(div.block, span, p ...)` rule.
+
+## 5. Profile pictures and popup (1.8)
+
+The base surface rule used the `background` shorthand with `!important`, which wiped `background-image` on banners and avatars. It is now `background-color` only; `background-image: none` is applied separately and excludes elements whose style or class contains `url(` or that use `bg-cover`/`bg-contain`. The banner placeholder rule also skips elements with an `img` child or `bg-[` class. The popup is generated: preset chips are grouped by category (`data-cat`), tabs switch `.pane` blocks, and the hidden `#themePreset` select is kept so `popup.js` logic is unchanged.
+
+Skeuo sidebar text now follows the denim brightness: `darkenHex(SIDE, 24)` -> `inkOn()` picks cream or near-black for rows, chips, the three top buttons (Search a call, Start a group, Convose events), section labels and hover (`inkOn(accent)`). `cream` stays constant for the header and call panel.
