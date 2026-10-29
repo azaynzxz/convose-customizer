@@ -60,7 +60,7 @@
     if (s.brutalMode) return "brutal";
     if (s.spookyMode) return "spooky";
     if (s.cyberMode) return "cyber";
-    if (s.ircMode) return "irc";
+    if (s.ircMode || s.themePreset === "komanda-irc") return "irc";
     return "";
   }
 
@@ -161,6 +161,10 @@
       "--text-color": settings.textColor,
       "--text-primary": settings.textColor,
       "--chat-input-color": settings.textColor,
+      "--msg-date-label-color": settings.textColor,
+      "--msg-time-label-color": settings.textColor,
+      "--label-reply-text-color": settings.textColor,
+      "--msg-reply-text-color": settings.textColor,
       "--profile-card-radius": radiusPx,
 
       "--color-body-background": settings.bgColor,
@@ -192,6 +196,10 @@
       "--color-start-quick-call-btn-bg": settings.accentColor,
       "--color-scroll-bar-bg": `color-mix(in srgb, ${settings.accentColor} 45%, transparent)`,
       "--color-text-color": settings.textColor,
+      "--color-msg-date-label-color": settings.textColor,
+      "--color-msg-time-label-color": settings.textColor,
+      "--color-label-reply-text-color": settings.textColor,
+      "--color-msg-reply-text-color": settings.textColor,
 
       "--bg-interest-header-hover": interestHover,
       "--selected-interest-bg": interestSelected,
@@ -308,7 +316,21 @@
       border-color: ${subtleBorder} !important;
     }
 
-    /* Interest chips (profile modal + sidebar): no black or white pills, level dots follow the accent */
+    /* Date & time separators inside chat */
+    .text-msg-date-label-color,
+    .text-msg-time-label-color,
+    .text-label-reply-text-color {
+      color: ${settings.textColor} !important;
+    }
+
+    /* Interest chips (profile modal + account + header + sidebar): prevent blackening when clicked or selected */
+    [data-interest-chip],
+    [data-interest-chip].dark\\:bg-black,
+    [data-interest-chip].dark\\:hover\\:bg-black,
+    html [data-interest-chip].dark\\:bg-black,
+    html [data-interest-chip].dark\\:hover\\:bg-black:hover,
+    html [data-interest-chip][class*="dark:bg-black"],
+    html [data-interest-chip][class*="dark:hover:bg-black"],
     .bg-bg-interest-header,
     .bg-selected-interest-bg,
     .bg-interest-selected,
@@ -316,35 +338,65 @@
       border-color: ${subtleBorder} !important;
     }
 
+    [data-interest-chip],
+    [data-interest-chip].dark\\:bg-black,
+    html [data-interest-chip],
+    html [data-interest-chip].dark\\:bg-black,
+    html [data-interest-chip][class*="dark:bg-black"],
     .bg-bg-interest-header {
       background-color: ${settings.bubbleColor} !important;
+      color: ${settings.textColor} !important;
     }
 
-    .bg-bg-interest-header:hover,
+    [data-interest-chip]:hover,
+    [data-interest-chip]:active,
+    [data-interest-chip]:focus,
+    [data-interest-chip].dark\\:hover\\:bg-black:hover,
+    [data-interest-chip].dark\\:hover\\:bg-black:active,
+    html [data-interest-chip][class*="dark:hover:bg-black"]:hover,
+    html [data-interest-chip][class*="dark:hover:bg-black"]:active,
+    [data-interest-chip].bg-bg-interest-header-hover,
     .hover\\:bg-bg-interest-header-hover:hover,
     .bg-bg-interest-header-hover {
       background-color: color-mix(in srgb, ${settings.bubbleColor} 70%, ${settings.accentColor}) !important;
+      border-color: ${settings.accentColor} !important;
+      color: ${settings.textColor} !important;
     }
 
+    /* When clicked / selected / active in profile modal or sidebar */
+    [data-interest-chip].bg-interest-selected,
+    [data-interest-chip][class*="interest-selected"],
+    html [data-interest-chip].bg-interest-selected,
+    html [data-interest-chip][class*="interest-selected"],
     .bg-selected-interest-bg,
     .bg-interest-selected {
-      background-color: color-mix(in srgb, ${settings.bubbleColor} 55%, ${settings.accentColor}) !important;
+      background-color: color-mix(in srgb, ${settings.bubbleColor} 50%, ${settings.accentColor}) !important;
+      border-color: ${settings.accentColor} !important;
+      color: ${settings.textColor} !important;
     }
 
     .bg-interest-icon-light-bg {
       background-color: ${settings.cardColor} !important;
     }
 
-    [data-component="my-interests"] [data-interest-chip],
-    [data-component="my-interests"] [data-interest-chip]:hover {
+    /* Text & inner elements inside all interest chips: prevent dark:text-black & dark:text-[#171717] */
+    [data-interest-chip] :is(span, p, div, button),
+    [data-interest-chip].dark\\:text-black,
+    [data-interest-chip] .dark\\:text-black,
+    [data-interest-chip] .dark\\:text-\\[\\#171717\\],
+    html [data-interest-chip] [class*="dark:text-black"],
+    html [data-interest-chip] [class*="dark:text-[#171717]"],
+    [data-interest-chip] .text-text-color,
+    [data-interest-chip]:hover :is(span, p, div, button),
+    [data-interest-chip]:active :is(span, p, div, button),
+    [data-interest-chip].bg-interest-selected :is(span, p, div, button) {
       color: ${settings.textColor} !important;
     }
 
-    [data-component="my-interests"] [data-interest-chip]:hover {
-      background-color: color-mix(in srgb, ${settings.bubbleColor} 70%, ${settings.accentColor}) !important;
-    }
-
-    [data-component="my-interests"] [data-interest-chip] [class*="knowledge-level"] {
+    [data-interest-chip] [class*="knowledge-level"],
+    [data-interest-chip] [class*="knowledge-level"] svg circle {
+      color: ${settings.accentColor} !important;
+      fill: currentColor !important;
       border-color: ${settings.accentColor} !important;
     }
 
@@ -1962,6 +2014,18 @@
     return "#" + ch((n >> 16) & 255) + ch((n >> 8) & 255) + ch(n & 255);
   }
 
+  // Pick black or white text for a background colour (whichever has more contrast).
+  function inkOn(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
+    if (!m) return "#111111";
+    const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    const n = parseInt(m[1], 16);
+    const L = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+    const darkText = (L + 0.05) / 0.05;      // contrast of black text
+    const lightText = 1.05 / (L + 0.05);     // contrast of white text
+    return darkText >= lightText ? "#111111" : "#ffffff";
+  }
+
   function buildSkeuoCss(settings, fontStack) {
     const BG = settings.bgColor;
     const SIDE = settings.sidebarColor;
@@ -1980,6 +2044,7 @@
     const sideBright = sideLight ? "#fff6dc" : "#111111";
     const sideShadow = sideLight ? "rgba(0, 0, 0, 0.65)" : "rgba(255, 255, 255, 0.55)";
     const hoverInk = inkOn(A);
+    const mineInk = inkOn(S);
     const tone = (c, w) => `color-mix(in srgb, ${c}, white ${w}%)`;
     const shade = (c, b) => `color-mix(in srgb, ${c}, black ${b}%)`;
     const rgba = (c, pct) => `color-mix(in srgb, ${c} ${pct}%, transparent)`;
@@ -2173,13 +2238,77 @@
         color: ${INK} !important;
       }
 
-      /* ---- Rows: avatars hidden, tag line moves into the bubble ---- */
-      [data-msg-row] > div.mt-\\[4px\\].h-\\[16px\\],
-      [data-msg-row] img.size-\\[30px\\],
-      [data-msg-row] > div > div.flex.items-baseline.gap-\\[6px\\],
-      [data-msg-row] > div > p.block.w-fit.text-left.text-\\[11px\\].font-bold {
-        display: none !important;
+      /* Date / Time separators in Skeuomorphic Retro chat - dark ink contrast on paper */
+      .text-msg-date-label-color,
+      .text-msg-time-label-color,
+      [data-chatbox] .text-msg-date-label-color,
+      [data-chatbox] .text-msg-time-label-color,
+      [data-chatbox] div:has(> .text-msg-date-label-color),
+      [data-chatbox] div:has(> .text-msg-time-label-color) {
+        color: ${INK} !important;
+        font-weight: 700 !important;
+        opacity: 0.9 !important;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) !important;
       }
+
+      [data-chatbox] div.text-msg-date-label-color,
+      [data-chatbox] div.text-msg-time-label-color {
+        background-color: color-mix(in srgb, ${PAPER} 60%, #ffffff) !important;
+        border: 1px solid rgba(0, 0, 0, 0.18) !important;
+        border-radius: 99px !important;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1), 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+        padding: 2px 14px !important;
+        width: fit-content !important;
+        margin: 6px auto !important;
+      }
+
+      ${settings.ircMode ? `
+        /* Explicit IRC Mode in Skeuo */
+        [data-msg-row] > div.mt-\\[4px\\].h-\\[16px\\],
+        [data-msg-row] img.size-\\[30px\\],
+        [data-msg-row] > div > div.flex.items-baseline.gap-\\[6px\\],
+        [data-msg-row] > div > p.block.w-fit.text-left.text-\\[11px\\].font-bold {
+          display: none !important;
+        }
+
+        [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before {
+          content: attr(data-cy-nick) "   " attr(data-cy-time);
+          display: block;
+          padding: 6px 13px 0 13px;
+          font-size: 10px;
+          font-weight: 700;
+          line-height: 1;
+          white-space: nowrap;
+          color: ${rgba(INK, 58)};
+          text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+        }
+
+        [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before {
+          color: ${mineInk === "#ffffff" ? "rgba(255, 255, 255, 0.82)" : "rgba(17, 17, 17, 0.75)"} !important;
+          text-shadow: ${mineInk === "#ffffff" ? "0 -1px 0 rgba(0, 0, 0, 0.35)" : "0 1px 0 rgba(255, 255, 255, 0.6)"} !important;
+        }
+      ` : `
+        /* Retro chat with avatars */
+        html [data-chatbox] [data-msg-row] img.size-\\[30px\\] {
+          border-radius: 6px !important;
+          box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+        }
+
+        html [data-chatbox] [data-msg-row] div.flex.items-baseline.gap-\\[6px\\] p {
+          font-family: ${font} !important;
+          font-size: 11.5px !important;
+          color: ${INK} !important;
+          font-weight: 700 !important;
+          text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+        }
+
+        html [data-chatbox] [data-msg-row] div.flex.items-baseline.gap-\\[6px\\] span {
+          font-family: ${font} !important;
+          font-size: 10px !important;
+          color: ${rgba(INK, 55)} !important;
+          text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+        }
+      `}
 
       [data-msg-row] {
         margin-top: 3px !important;
@@ -2229,29 +2358,12 @@
       }
 
       [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="image"]):not([data-message-type="intro"]) {
+        background-color: ${S} !important;
         background-image: ${gloss(S)} !important;
       }
 
       [data-msg-row]:hover [data-msg-bubble="true"]:not([data-message-type="intro"]) {
         opacity: 0.96 !important;
-      }
-
-      /* Tag line inside the first bubble of a speaker block */
-      [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before {
-        content: attr(data-cy-nick) "   " attr(data-cy-time);
-        display: block;
-        padding: 6px 13px 0 13px;
-        font-size: 10px;
-        font-weight: 700;
-        line-height: 1;
-        white-space: nowrap;
-        color: ${rgba(INK, 58)};
-        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
-      }
-
-      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before {
-        color: rgba(255, 255, 255, 0.82);
-        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35);
       }
 
       [data-msg-row] [data-msg-bubble="true"] > div.block {
@@ -2271,8 +2383,8 @@
 
       [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block,
       [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block span {
-        color: #ffffff !important;
-        text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+        color: ${mineInk} !important;
+        text-shadow: ${mineInk === "#ffffff" ? "0 -1px 0 rgba(0, 0, 0, 0.4)" : "0 1px 0 rgba(255, 255, 255, 0.6)"} !important;
       }
 
       [data-msg-row] [data-msg-bubble="true"] .Linkify,
@@ -2283,6 +2395,15 @@
       [data-msg-row] [data-msg-bubble="true"] a {
         color: ${shade(A, 10)} !important;
         text-decoration: underline !important;
+      }
+
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] a {
+        color: ${mineInk === "#ffffff" ? "#ffffff" : shade(A, 25)} !important;
+      }
+
+      [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] {
+        --msg-reply-text-color: ${mineInk} !important;
+        --color-msg-reply-text-color: ${mineInk} !important;
       }
 
       [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] a {
@@ -2518,6 +2639,30 @@
         text-shadow: none !important;
       }
 
+      /* Denim sidebar interest chips: dark inset denim surface, crisp cream text */
+      html body aside[data-component="sidebar"] [data-interest-chip] {
+        border: none !important;
+        border-radius: 9px !important;
+        background-color: transparent !important;
+        background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.15)) !important;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(0, 0, 0, 0.28), 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+      }
+
+      html body aside[data-component="sidebar"] [data-interest-chip] :is(span, div, p) {
+        color: ${sideBright} !important;
+        text-shadow: 0 ${sideLight ? "-1px" : "1px"} 0 ${sideShadow} !important;
+      }
+
+      html body aside[data-component="sidebar"] [data-interest-chip]:hover {
+        background-image: ${gloss(A)} !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 3px rgba(0, 0, 0, 0.55) !important;
+      }
+
+      html body aside[data-component="sidebar"] [data-interest-chip]:hover :is(span, div, p) {
+        color: ${hoverInk} !important;
+        text-shadow: none !important;
+      }
+
       /* Metal pill buttons (+ Add interests, Upgrade) */
       aside[data-component="sidebar"] [data-component="add-interest-input"],
       html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a) {
@@ -2526,6 +2671,58 @@
         border: 1px solid #5c6065 !important;
         border-radius: 18px !important;
         box-shadow: inset 0 1px 0 #ffffff, 0 2px 3px rgba(0, 0, 0, 0.55) !important;
+      }
+
+      /* Skeuo interest chips in profile modal and general content (NOT in sidebar) */
+      :not(aside) > * > [data-interest-chip],
+      [data-component="my-account"] [data-interest-chip],
+      [data-component="my-interests"] [data-interest-chip],
+      [data-suggestion-card] [data-interest-chip] {
+        border-color: rgba(0, 0, 0, 0.22) !important;
+        background-color: ${PB} !important;
+        background-image: linear-gradient(180deg, ${tone(PB, 55)} 0%, ${PB} 55%, ${shade(PB, 7)} 100%) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 2px rgba(0, 0, 0, 0.18) !important;
+      }
+
+      :not(aside) > * > [data-interest-chip] :is(span, div, p, button),
+      [data-component="my-account"] [data-interest-chip] :is(span, div, p, button),
+      [data-component="my-interests"] [data-interest-chip] :is(span, div, p, button),
+      [data-suggestion-card] [data-interest-chip] :is(span, div, p, button) {
+        color: ${INK} !important;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+      }
+
+      :not(aside) > * > [data-interest-chip]:hover,
+      [data-component="my-account"] [data-interest-chip]:hover,
+      [data-component="my-interests"] [data-interest-chip]:hover,
+      [data-suggestion-card] [data-interest-chip]:hover {
+        background-image: ${gloss(A)} !important;
+        border-color: ${shade(A, 30)} !important;
+      }
+
+      :not(aside) > * > [data-interest-chip]:hover :is(span, div, p, button),
+      [data-component="my-account"] [data-interest-chip]:hover :is(span, div, p, button),
+      [data-component="my-interests"] [data-interest-chip]:hover :is(span, div, p, button),
+      [data-suggestion-card] [data-interest-chip]:hover :is(span, div, p, button) {
+        color: ${hoverInk} !important;
+        text-shadow: none !important;
+      }
+
+      :not(aside) > * > [data-interest-chip].bg-interest-selected,
+      :not(aside) > * > [data-interest-chip][class*="interest-selected"],
+      [data-component="my-account"] [data-interest-chip].bg-interest-selected,
+      [data-component="my-interests"] [data-interest-chip].bg-interest-selected {
+        background-color: ${S} !important;
+        background-image: ${gloss(S)} !important;
+        border-color: ${shade(S, 30)} !important;
+      }
+
+      :not(aside) > * > [data-interest-chip].bg-interest-selected :is(span, div, p, button),
+      :not(aside) > * > [data-interest-chip][class*="interest-selected"] :is(span, div, p, button),
+      [data-component="my-account"] [data-interest-chip].bg-interest-selected :is(span, div, p, button),
+      [data-component="my-interests"] [data-interest-chip].bg-interest-selected :is(span, div, p, button) {
+        color: ${mineInk} !important;
+        text-shadow: ${mineInk === "#ffffff" ? "0 -1px 0 rgba(0, 0, 0, 0.35)" : "0 1px 0 rgba(255, 255, 255, 0.5)"} !important;
       }
 
       aside[data-component="sidebar"] [data-component="add-interest-input"],
@@ -2690,23 +2887,56 @@
     const S = settings.secondaryColor || "#e52521";
     const INK = settings.textColor;
     const K = "#1a1a1a";
-    const px = `"Press Start 2P", "Courier New", monospace`;
-    const body = fontStack || `"Nunito", "Segoe UI", Arial, sans-serif`;
+    const sideLight = inkOn(SIDE) === "#ffffff";
+    const sideText = sideLight ? "#ffffff" : "#1a1a1a";
+    const sideTitle = sideLight ? A : "#1a1a1a";
+    const px = '"Press Start 2P", "Courier New", monospace';
+    const body = fontStack || '"Nunito", "Segoe UI", Arial, sans-serif';
     const shade = (c, b) => `color-mix(in srgb, ${c}, black ${b}%)`;
-    const gridSlot = `[data-component="suggestions-grid"] > div:not(.fixed) > div.relative.block.size-full > div[data-chat-id]`;
+    const gridSlot = '[data-component="suggestions-grid"] > div:not(.fixed) > div.relative.block.size-full > div[data-chat-id]';
     const pill = `html [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]),
       aside[data-component="sidebar"] [data-component="add-interest-input"],
       html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a)`;
 
-    const base = buildSkeuoCss({ ...settings, cyberFx: false }, body);
+    return `
+      /* =========================================================
+         ARCADE STYLE: chunky 8-bit panels, gold strips, pixel labels
+         ========================================================= */
 
-    return base + `
-      /* ===== Arcade layer: flatten the skeuo look into chunky 8-bit panels ===== */
+      :root,
+      :host,
+      html,
+      html[data-theme="dark"],
+      html[data-theme="light"] {
+        --call-screen-inchat-bg: ${shade(SIDE, 45)} !important;
+        --color-call-screen-inchat-bg: ${shade(SIDE, 45)} !important;
+        --card-header-in-call-bg: ${shade(SIDE, 45)} !important;
+        --msg-date-label-color: ${K} !important;
+        --msg-time-label-color: ${K} !important;
+        --color-msg-date-label-color: ${K} !important;
+        --color-msg-time-label-color: ${K} !important;
+        --msg-reply-text-color: ${K} !important;
+        --color-msg-reply-text-color: ${K} !important;
+      }
+
+      html {
+        background-color: ${BG} !important;
+      }
 
       html body,
       [data-component="suggestions-grid"] {
+        background-color: ${BG} !important;
         background-image:
           repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.10) 0 14px, transparent 14px 28px) !important;
+      }
+
+      [data-component="suggestions-grid"]:not(.fixed):not(.absolute) {
+        position: relative !important;
+      }
+
+      [data-component="suggestions-grid"] > div:not(.fixed) {
+        position: relative;
+        z-index: 1;
       }
 
       [data-component="suggestions-grid"]::before,
@@ -2714,16 +2944,30 @@
 
       ${gridSlot} {
         border-radius: 8px !important;
+        background: ${PAPER} !important;
+        border: none !important;
         box-shadow: 0 0 0 4px ${K}, 7px 7px 0 4px rgba(0, 0, 0, 0.35) !important;
       }
 
       ${gridSlot}.bg-modal-input-border-focus-color {
+        background: ${PAPER} !important;
         box-shadow: 0 0 0 4px ${K}, 0 0 0 8px ${A}, 0 0 0 11px ${K}, 7px 7px 0 11px rgba(0, 0, 0, 0.35) !important;
       }
 
-      /* Header: gold strip */
+      [data-chatbox],
+      [data-chatbox] > div,
+      [data-chatbox] > div > div {
+        border-radius: 8px !important;
+      }
+
+      [data-chatbox] {
+        font-family: ${body};
+      }
+
+      /* Header: gold strip with pixel font */
       html [data-chatbox] [data-component="group-card-header"],
       html [data-chatbox] header {
+        position: relative !important;
         background: ${A} !important;
         border-bottom: 4px solid ${K} !important;
         box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.16) !important;
@@ -2732,7 +2976,12 @@
 
       [data-chatbox] [data-component="group-card-header"]::before,
       [data-chatbox] header::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
         background: repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0 8px, transparent 8px 16px) !important;
+        pointer-events: none;
       }
 
       [data-chatbox] header::after { display: none !important; }
@@ -2765,13 +3014,107 @@
         box-shadow: none !important;
       }
 
+      /* Date and time separators inside arcade chat */
+      .text-msg-date-label-color,
+      .text-msg-time-label-color,
+      [data-chatbox] .text-msg-date-label-color,
+      [data-chatbox] .text-msg-time-label-color {
+        color: ${K} !important;
+        font-family: ${px} !important;
+        font-size: 8px !important;
+        font-weight: 400 !important;
+      }
+
+      [data-chatbox] div.text-msg-date-label-color,
+      [data-chatbox] div.text-msg-time-label-color {
+        background-color: #ffffff !important;
+        border: 2px solid ${K} !important;
+        border-radius: 4px !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+        padding: 3px 10px !important;
+        width: fit-content !important;
+        margin: 6px auto !important;
+      }
+
+      ${settings.ircMode ? `
+        /* Explicit IRC Mode in Arcade */
+        [data-msg-row] > div.mt-\\[4px\\].h-\\[16px\\],
+        [data-msg-row] img.size-\\[30px\\],
+        [data-msg-row] > div > div.flex.items-baseline.gap-\\[6px\\],
+        [data-msg-row] > div > p.block.w-fit.text-left.text-\\[11px\\].font-bold,
+        [data-msg-row] span.invisible.absolute.right-full {
+          display: none !important;
+        }
+
+        [data-msg-row] {
+          min-height: 24px;
+          padding-top: 2px !important;
+          padding-bottom: 2px !important;
+        }
+
+        [data-msg-row][data-irc-mine="true"] [data-msg-actions].contents {
+          display: inline-flex !important;
+          order: 10 !important;
+          margin-left: auto !important;
+        }
+
+        html [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before {
+          display: block;
+          content: attr(data-cy-nick) "   " attr(data-cy-time);
+          font-family: ${px};
+          font-size: 7px;
+          line-height: 1.4;
+          padding-top: 6px;
+          color: ${K};
+          text-shadow: none;
+          opacity: 0.75;
+        }
+
+        html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before {
+          display: block;
+          content: attr(data-cy-nick) "   " attr(data-cy-time);
+          color: #ffffff;
+          text-shadow: 1px 1px 0 ${K};
+          opacity: 1;
+        }
+      ` : `
+        /* Arcade chat with avatars & right-aligned own bubbles */
+        html [data-chatbox] [data-msg-row] img.size-\\[30px\\] {
+          border: 2px solid ${K} !important;
+          box-shadow: 2px 2px 0 ${K} !important;
+          border-radius: 4px !important;
+        }
+
+        html [data-chatbox] [data-msg-row] div.flex.items-baseline.gap-\\[6px\\] p {
+          font-family: ${px} !important;
+          font-size: 9px !important;
+          color: ${K} !important;
+          font-weight: 700 !important;
+          letter-spacing: 0 !important;
+        }
+
+        html [data-chatbox] [data-msg-row] div.flex.items-baseline.gap-\\[6px\\] span {
+          font-family: ${px} !important;
+          font-size: 8px !important;
+          color: #666666 !important;
+        }
+      `}
+
+      /* Suppress redundant large link preview cards */
+      [data-msg-bubble="true"] > div.flex.max-w-full.flex-col.overflow-hidden,
+      [data-msg-bubble="true"] > div.flex.flex-col.items-start.justify-center,
+      [data-msg-bubble="true"] div:has(> a[target="_blank"] > img) {
+        display: none !important;
+      }
+
       /* Bubbles: flat colour, thick outline, hard shadow */
-      html [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+      html [data-msg-row]:not([data-irc-mine="true"]) [data-msg-bubble="true"]:not([data-message-type="intro"]) {
         border: 3px solid ${K} !important;
         border-radius: 8px !important;
         box-shadow: 3px 3px 0 ${K} !important;
         background-image: none !important;
         background-color: ${PB} !important;
+        color: ${K} !important;
         filter: none !important;
       }
 
@@ -2784,6 +3127,7 @@
         background-color: ${S} !important;
         border-color: ${K} !important;
         box-shadow: 3px 3px 0 ${K} !important;
+        color: ${inkOn(S)} !important;
       }
 
       html [data-msg-row] [data-msg-bubble="true"] > div.block {
@@ -2794,62 +3138,119 @@
 
       html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block,
       html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block span {
-        text-shadow: 1px 1px 0 ${K} !important;
+        color: ${inkOn(S)} !important;
+        text-shadow: ${inkOn(S) === "#ffffff" ? `1px 1px 0 ${K}` : "none"} !important;
       }
 
-      html [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before {
-        font-family: ${px};
-        font-size: 7px;
-        line-height: 1.4;
-        padding-top: 8px;
-        color: ${K};
-        text-shadow: none;
-        opacity: 0.75;
+      html [data-msg-row] [data-msg-bubble="true"] a { color: #1b4fd8 !important; }
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] a { color: #ffffff !important; }
+
+      [data-component="chat-message-reply"] > div.bg-msg-bubble-reply-bg {
+        background: #ffffff !important;
+        border: 2px solid ${K} !important;
+        border-radius: 4px !important;
+        box-shadow: 2px 2px 0 ${K} !important;
       }
 
-      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before {
-        color: #ffffff;
-        text-shadow: 1px 1px 0 ${K};
-        opacity: 1;
+      [data-msg-reactions],
+      .bg-buble-reaction-bg {
+        background: #ffffff !important;
+        border: 2px solid ${K} !important;
+        border-radius: 4px !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+        color: ${K} !important;
       }
 
-      /* Sidebar: brick-block wall */
-      html aside[data-component="sidebar"] {
-        background-image:
-          linear-gradient(0deg, rgba(0, 0, 0, 0.35) 2px, transparent 2px),
-          conic-gradient(rgba(255, 255, 255, 0.08) 25%, transparent 0 50%, rgba(255, 255, 255, 0.08) 0 75%, transparent 0) !important;
-        background-size: 100% 16px, 32px 32px !important;
-        border-right: 4px solid ${K} !important;
+      .bg-buble-reacted-bg,
+      [data-msg-reactions].bg-buble-reacted-bg {
+        background: ${A} !important;
+        color: ${K} !important;
       }
 
-      html aside[data-component="sidebar"] {
-        text-shadow: 1px 1px 0 ${K};
+      /* Input bar: chunky 8-bit styling */
+      [data-component="chat-input"] {
+        background: ${PAPER} !important;
+        border-top: 4px solid ${K} !important;
+        box-shadow: none !important;
+        border-radius: 0 0 6px 6px !important;
       }
 
-      aside[data-component="sidebar"] article.group\\/row,
-      aside[data-component="sidebar"] [data-interest-chip],
-      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button,
-      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a {
+      [data-component="chat-input"] .bg-input-text-msg-form {
+        background: #ffffff !important;
         background-image: none !important;
-        background-color: ${shade(SIDE, 40)} !important;
         border: 3px solid ${K} !important;
         border-radius: 6px !important;
         box-shadow: 3px 3px 0 ${K} !important;
       }
 
+      [data-component="chat-input"] textarea,
+      [data-component="chat-input"] input,
+      [data-component="chat-input"] [contenteditable] {
+        color: ${K} !important;
+        font-family: ${body} !important;
+        font-weight: 700 !important;
+      }
+
+      [data-component="chat-input"] ::placeholder {
+        color: rgba(0, 0, 0, 0.45) !important;
+        font-family: ${body} !important;
+      }
+
+      [data-component="chat-input"] svg {
+        color: ${K} !important;
+      }
+
+      /* Sidebar: brick-block wall */
+      html aside[data-component="sidebar"] {
+        background-color: ${SIDE} !important;
+        background-image:
+          linear-gradient(0deg, rgba(0, 0, 0, 0.35) 2px, transparent 2px),
+          conic-gradient(rgba(255, 255, 255, 0.08) 25%, transparent 0 50%, rgba(255, 255, 255, 0.08) 0 75%, transparent 0) !important;
+        background-size: 100% 16px, 32px 32px !important;
+        border-right: 4px solid ${K} !important;
+        text-shadow: 1px 1px 0 ${K};
+      }
+
+      aside[data-component="sidebar"] article.group\\/row,
+      aside[data-component="sidebar"] [data-interest-chip],
+      aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > button,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > a {
+        background-image: none !important;
+        background-color: ${shade(SIDE, 35)} !important;
+        border: 2px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+      }
+
+      /* Arcade sidebar text: crisp bright titles and text with black drop shadow */
+      html body aside[data-component="sidebar"] article.group\\/row :is(span, div, p),
+      html body aside[data-component="sidebar"] [data-interest-chip] :is(span, div, p),
+      html body aside[data-component="sidebar"] > div.mb-\\[7px\\] > :is(button, a),
+      html body aside[data-component="sidebar"] > div.mb-\\[7px\\] > :is(button, a) * {
+        color: ${sideText} !important;
+        text-shadow: 1px 1px 0 #000000 !important;
+      }
+
+      html body aside[data-component="sidebar"] article.group\\/row .text-\\[14px\\].font-bold {
+        color: ${sideTitle} !important;
+        font-family: ${px} !important;
+        font-size: 10px !important;
+        letter-spacing: 0 !important;
+      }
+
       aside[data-component="sidebar"] article.group\\/row:hover,
       aside[data-component="sidebar"] [data-interest-chip]:hover,
-      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button:hover,
-      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a:hover {
+      aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > button:hover,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > a:hover {
         background-image: none !important;
         background-color: ${A} !important;
-        box-shadow: 3px 3px 0 ${K} !important;
+        box-shadow: 2px 2px 0 ${K} !important;
       }
 
       html aside[data-component="sidebar"] article.group\\/row.group\\/row:hover :is(span, div, p),
       html aside[data-component="sidebar"] [data-interest-chip]:hover :is(span, div),
-      html aside[data-component="sidebar"] > div.mb-\\[7px\\] > :is(button, a):hover,
-      html aside[data-component="sidebar"] > div.mb-\\[7px\\] > :is(button, a):hover * {
+      html aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > :is(button, a):hover,
+      html aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > :is(button, a):hover * {
         color: ${K} !important;
         text-shadow: none !important;
       }
@@ -2861,6 +3262,7 @@
         font-weight: 400 !important;
         letter-spacing: 0 !important;
         color: ${A} !important;
+        text-shadow: 1px 1px 0 #000000 !important;
       }
 
       html aside[data-component="sidebar"] > div.absolute.bottom-2 {
@@ -2870,6 +3272,18 @@
       }
 
       /* Chunky buttons */
+      [data-component="mic-button"],
+      [data-component="mic-button"].bg-\\[\\#5865f2\\],
+      [data-component="mic-button"]:hover,
+      html [data-chatbox] button.bg-primary {
+        background: ${A} !important;
+        background-image: none !important;
+        border: 3px solid ${K} !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 0 ${K} !important;
+        color: ${K} !important;
+      }
+
       ${pill} {
         background-color: ${A} !important;
         background-image: none !important;
@@ -2905,7 +3319,7 @@
         box-shadow: 3px 3px 0 ${K} !important;
       }
 
-      .bg-\\[\\#599C66\\]:not(.rounded-full):not([class*="size-"]),
+      .bg-\\[\\#599C66\\\\]:not(.rounded-full):not([class*="size-"]),
       [class*="bg-[#599c66" i]:not(.rounded-full):not([class*="size-"]) {
         background-image: none !important;
         background-color: #43b047 !important;
@@ -2933,8 +3347,41 @@
         color: #ffffff !important;
       }
 
-      html [data-msg-row] [data-msg-bubble="true"] a { color: #1b4fd8 !important; }
-      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] a { color: #ffffff !important; }
+      .audio-seek { --audio-fill: ${K} !important; --audio-rest: rgba(0, 0, 0, 0.25) !important; }
+      html [data-msg-row][data-irc-mine="true"] .audio-seek { --audio-fill: #ffffff !important; --audio-rest: rgba(255, 255, 255, 0.4) !important; }
+
+      /* Arcade interest chips */
+      [data-interest-chip],
+      html [data-interest-chip] {
+        background-color: ${shade(PB, 15)} !important;
+        border: 2px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+      }
+
+      [data-interest-chip] :is(span, div, p, button),
+      html [data-interest-chip] :is(span, div, p, button) {
+        color: ${K} !important;
+      }
+
+      [data-interest-chip]:hover,
+      html [data-interest-chip]:hover {
+        background-color: ${A} !important;
+      }
+
+      [data-interest-chip].bg-interest-selected,
+      [data-interest-chip][class*="interest-selected"],
+      html [data-interest-chip].bg-interest-selected,
+      html [data-interest-chip][class*="interest-selected"] {
+        background-color: ${S} !important;
+      }
+
+      [data-interest-chip].bg-interest-selected :is(span, div, p, button),
+      [data-interest-chip][class*="interest-selected"] :is(span, div, p, button),
+      html [data-interest-chip].bg-interest-selected :is(span, div, p, button),
+      html [data-interest-chip][class*="interest-selected"] :is(span, div, p, button) {
+        color: ${inkOn(S)} !important;
+      }
 
       /* Scrollbars */
       html, [data-chatbox], aside[data-component="sidebar"] {
@@ -2943,17 +3390,6 @@
       }
     `;
   }
-
-
-  /* =============================================================
-     NEO-BRUTALIST STYLE (settings.brutalMode): flat cream page, thick black
-     outlines, hard offset shadows, bold condensed headings, bright flat colours
-     (yellow, pink, teal). Built on the arcade layer, then re-coloured for
-     light panels with dark text. No textures, no overlay nodes, no filters.
-     Palette: bgColor = page, sidebarColor = sidebar, cardColor = chat panel,
-     bubbleColor = other bubbles, accentColor = headers/buttons,
-     secondaryColor = own bubbles and hover, textColor = ink.
-     ============================================================= */
 
   /* =============================================================
      SPOOKY STYLE (settings.spookyMode): Halloween.
@@ -3091,22 +3527,40 @@
     const INK = settings.textColor;
     const fx = settings.cyberFx !== false;
     const K = "#0b0510";
-    const crt = `"Creepster", "Chiller", "Papyrus", cursive`;
-    const body = fontStack || `"Nunito", "Segoe UI", Arial, sans-serif`;
+    const crt = '"Creepster", "Chiller", "Papyrus", cursive';
+    const body = fontStack || '"Nunito", "Segoe UI", Arial, sans-serif';
     const shade = (c, b) => `color-mix(in srgb, ${c}, black ${b}%)`;
     const tone = (c, w) => `color-mix(in srgb, ${c}, white ${w}%)`;
     const rgba = (c, pct) => `color-mix(in srgb, ${c} ${pct}%, transparent)`;
     const ink = inkOn(A);
     const edge = rgba(A, 50);
-    const gridSlot = `[data-component="suggestions-grid"] > div:not(.fixed) > div.relative.block.size-full > div[data-chat-id]`;
+    const gridSlot = '[data-component="suggestions-grid"] > div:not(.fixed) > div.relative.block.size-full > div[data-chat-id]';
     const pill = `html [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]),
       aside[data-component="sidebar"] [data-component="add-interest-input"],
       html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a)`;
 
-    const base = buildSkeuoCss({ ...settings, cyberFx: false }, body);
+    return `
+      /* =========================================================
+         SPOOKY STYLE: gothic night, pumpkin glow, dripping blood
+         ========================================================= */
 
-    return base + `
-      /* ===== Spooky layer: flatten the skeuo look into a haunted night ===== */
+      :root,
+      :host,
+      html,
+      html[data-theme="dark"],
+      html[data-theme="light"] {
+        --call-screen-inchat-bg: ${shade(PAPER, 45)} !important;
+        --color-call-screen-inchat-bg: ${shade(PAPER, 45)} !important;
+        --card-header-in-call-bg: ${shade(PAPER, 45)} !important;
+        --msg-date-label-color: ${A} !important;
+        --msg-time-label-color: ${A} !important;
+        --color-msg-date-label-color: ${A} !important;
+        --color-msg-time-label-color: ${A} !important;
+      }
+
+      html {
+        background-color: ${BG} !important;
+      }
 
       html body,
       [data-component="suggestions-grid"] {
@@ -3116,21 +3570,44 @@
           radial-gradient(ellipse at 8% 100%, ${rgba(A, 14)}, transparent 50%) !important;
       }
 
+      [data-component="suggestions-grid"]:not(.fixed):not(.absolute) {
+        position: relative !important;
+      }
+
+      [data-component="suggestions-grid"] > div:not(.fixed) {
+        position: relative;
+        z-index: 1;
+      }
+
       [data-component="suggestions-grid"]::before,
       [data-component="suggestions-grid"]::after { display: none !important; }
 
       ${gridSlot} {
         border-radius: 12px !important;
+        background: ${PAPER} !important;
+        border: none !important;
         box-shadow: 0 0 0 2px ${edge}, 0 4px 0 ${K} !important;
       }
 
       ${gridSlot}.bg-modal-input-border-focus-color {
+        background: ${PAPER} !important;
         box-shadow: 0 0 0 2px ${A}, 0 4px 0 ${K} !important;
+      }
+
+      [data-chatbox],
+      [data-chatbox] > div,
+      [data-chatbox] > div > div {
+        border-radius: 12px !important;
+      }
+
+      [data-chatbox] {
+        font-family: ${body};
       }
 
       /* Header */
       html [data-chatbox] [data-component="group-card-header"],
       html [data-chatbox] header {
+        position: relative !important;
         background: ${shade(PAPER, 30)} !important;
         border-bottom: 2px solid ${A} !important;
         box-shadow: none !important;
@@ -3167,6 +3644,86 @@
         box-shadow: none !important;
       }
 
+      /* Date and time separators inside spooky chat */
+      .text-msg-date-label-color,
+      .text-msg-time-label-color,
+      [data-chatbox] .text-msg-date-label-color,
+      [data-chatbox] .text-msg-time-label-color {
+        color: ${A} !important;
+        font-family: ${crt} !important;
+        font-size: 15px !important;
+        letter-spacing: 0.05em;
+      }
+
+      [data-chatbox] div.text-msg-date-label-color,
+      [data-chatbox] div.text-msg-time-label-color {
+        background-color: ${shade(PAPER, 20)} !important;
+        border: 1.5px solid ${edge} !important;
+        border-radius: 99px !important;
+        padding: 2px 14px !important;
+        width: fit-content !important;
+        margin: 6px auto !important;
+      }
+
+      ${settings.ircMode ? `
+        /* Explicit IRC Mode in Spooky */
+        [data-msg-row] > div.mt-\\[4px\\].h-\\[16px\\],
+        [data-msg-row] img.size-\\[30px\\],
+        [data-msg-row] > div > div.flex.items-baseline.gap-\\[6px\\],
+        [data-msg-row] > div > p.block.w-fit.text-left.text-\\[11px\\].font-bold,
+        [data-msg-row] span.invisible.absolute.right-full {
+          display: none !important;
+        }
+
+        [data-msg-row] {
+          min-height: 24px;
+          padding-top: 2px !important;
+          padding-bottom: 2px !important;
+        }
+
+        [data-msg-row][data-irc-mine="true"] [data-msg-actions].contents {
+          display: inline-flex !important;
+          order: 10 !important;
+          margin-left: auto !important;
+        }
+
+        html [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before {
+          display: block;
+          content: attr(data-cy-nick) "   " attr(data-cy-time);
+          font-family: ${crt};
+          font-size: 13px;
+          letter-spacing: 0.06em;
+          color: ${A};
+          text-shadow: none;
+        }
+
+        html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before {
+          display: block;
+          content: attr(data-cy-nick) "   " attr(data-cy-time);
+          color: ${tone(S, 70)};
+          text-shadow: none;
+        }
+      ` : `
+        /* Spooky chat with avatars & right-aligned own bubbles */
+        html [data-chatbox] [data-msg-row] img.size-\\[30px\\] {
+          border: 1px solid ${edge} !important;
+          border-radius: 8px !important;
+        }
+
+        html [data-chatbox] [data-msg-row] div.flex.items-baseline.gap-\\[6px\\] p {
+          font-family: ${body} !important;
+          font-size: 12px !important;
+          color: ${A} !important;
+          font-weight: 700 !important;
+        }
+
+        html [data-chatbox] [data-msg-row] div.flex.items-baseline.gap-\\[6px\\] span {
+          font-family: ${crt} !important;
+          font-size: 11px !important;
+          color: ${tone(edge, 40)} !important;
+        }
+      `}
+
       /* Bubbles */
       html [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
         border: 2px solid ${edge} !important;
@@ -3174,6 +3731,7 @@
         box-shadow: none !important;
         background-image: none !important;
         background-color: ${PB} !important;
+        color: ${INK} !important;
         opacity: 1 !important;
       }
 
@@ -3185,6 +3743,7 @@
       html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
         background-color: ${S} !important;
         border-color: ${rgba(tone(S, 40), 70)} !important;
+        color: #ffffff !important;
       }
 
       html [data-msg-row] [data-msg-bubble="true"] > div.block {
@@ -3196,19 +3755,6 @@
       html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block,
       html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block span {
         text-shadow: none !important;
-      }
-
-      html [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before {
-        font-family: ${crt};
-        font-size: 13px;
-        letter-spacing: 0.06em;
-        color: ${A};
-        text-shadow: none;
-      }
-
-      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before {
-        color: ${tone(S, 70)};
-        text-shadow: none;
       }
 
       html [data-msg-row] [data-msg-bubble="true"] a { color: ${tone(A, 25)} !important; }
@@ -3240,246 +3786,295 @@
       /* Input bar */
       [data-component="chat-input"] {
         background: ${shade(PAPER, 25)} !important;
+        border-top: 2px solid ${edge} !important;
         box-shadow: inset 0 1px 0 ${rgba(A, 35)} !important;
       }
 
       [data-component="chat-input"] .bg-input-text-msg-form {
         background: ${PB} !important;
-        border: 1px solid ${edge} !important;
+        border: 1.5px solid ${edge} !important;
         box-shadow: none !important;
+        border-radius: 10px !important;
       }
 
-      [data-component="chat-input"] svg { color: ${A} !important; filter: none !important; }
+      [data-component="chat-input"] textarea,
+      [data-component="chat-input"] input,
+      [data-component="chat-input"] [contenteditable] {
+        color: ${INK} !important;
+        font-family: ${body} !important;
+      }
+
+      [data-component="chat-input"] ::placeholder {
+        color: ${rgba(INK, 40)} !important;
+      }
+
+      [data-component="chat-input"] svg {
+        color: ${A} !important;
+      }
 
       /* Sidebar */
       html aside[data-component="sidebar"] {
-        text-shadow: none;
+        background-color: ${SIDE} !important;
+        background-image:
+          radial-gradient(ellipse at 50% 0%, ${rgba(S, 20)}, transparent 65%),
+          radial-gradient(ellipse at 50% 100%, ${rgba(A, 12)}, transparent 55%) !important;
         border-right: 2px solid ${edge} !important;
+        color: ${INK};
       }
 
       aside[data-component="sidebar"] article.group\\/row,
       aside[data-component="sidebar"] [data-interest-chip],
-      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button,
-      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a {
+      aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > button,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > a {
+        background-color: ${shade(SIDE, 35)} !important;
         background-image: none !important;
-        background-color: ${tone(SIDE, 7)} !important;
-        border: 1px solid ${rgba(A, 30)} !important;
-        border-radius: 10px !important;
-        box-shadow: none !important;
+        border: 1px solid ${edge} !important;
+        border-radius: 8px !important;
+        box-shadow: 0 2px 0 ${K} !important;
+        color: ${INK} !important;
       }
 
       aside[data-component="sidebar"] article.group\\/row:hover,
       aside[data-component="sidebar"] [data-interest-chip]:hover,
-      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button:hover,
-      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a:hover {
-        background-image: none !important;
-        background-color: ${A} !important;
-        box-shadow: none !important;
+      aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > button:hover,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > a:hover {
+        background-color: ${shade(SIDE, 20)} !important;
+        border-color: ${A} !important;
+      }
+
+      html aside[data-component="sidebar"] article.group\\/row.group\\/row:hover :is(span, div, p),
+      html aside[data-component="sidebar"] [data-interest-chip]:hover :is(span, div) {
+        color: ${A} !important;
       }
 
       aside[data-component="sidebar"] > div.-mb-0\\.5.mt-1\\.5 > p,
       aside[data-component="sidebar"] section > div.-mb-0\\.5 > span {
         font-family: ${crt} !important;
         font-size: 16px !important;
-        font-weight: 400 !important;
-        letter-spacing: 0.06em !important;
-        text-transform: none !important;
+        letter-spacing: 0.05em !important;
         color: ${A} !important;
       }
 
       html aside[data-component="sidebar"] > div.absolute.bottom-2 {
-        background-color: ${shade(SIDE, 35)} !important;
+        background-color: ${shade(SIDE, 45)} !important;
         border-top: 2px solid ${edge} !important;
         box-shadow: none !important;
       }
 
-      /* Pumpkin buttons */
-      ${pill} {
-        background-color: ${A} !important;
+      /* Buttons */
+      [data-component="mic-button"],
+      [data-component="mic-button"].bg-\\[\\#5865f2\\],
+      [data-component="mic-button"]:hover,
+      html [data-chatbox] button.bg-primary {
+        background: ${A} !important;
         background-image: none !important;
-        border: 2px solid ${shade(A, 55)} !important;
-        border-radius: 16px !important;
-        box-shadow: 0 3px 0 ${shade(A, 60)} !important;
+        border: 2px solid ${shade(A, 40)} !important;
+        border-radius: 8px !important;
+        box-shadow: 0 0 10px ${rgba(A, 40)} !important;
         color: ${ink} !important;
-        text-shadow: none !important;
+      }
+
+      ${pill} {
+        background-color: ${shade(SIDE, 30)} !important;
+        background-image: none !important;
+        border: 1px solid ${edge} !important;
+        border-radius: 8px !important;
+        box-shadow: 0 2px 0 ${K} !important;
+        color: ${A} !important;
       }
 
       html aside[data-component="sidebar"] [data-component="add-interest-input"] *,
       html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a),
       html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a) * {
-        color: ${ink} !important;
-        text-shadow: none !important;
-        font-weight: 800 !important;
+        color: ${A} !important;
       }
 
       aside[data-component="sidebar"] [data-cy-badge] {
         background-image: none !important;
-        background-color: ${S} !important;
-        border: 1px solid ${K} !important;
-        box-shadow: none !important;
-        color: #ffffff !important;
+        background-color: ${A} !important;
+        color: ${ink} !important;
+        border-radius: 50% !important;
       }
 
-      .bg-primary,
-      .bg-start-quick-call-btn-bg,
-      [data-component="group-call-banner"],
-      [data-component="mic-button"].bg-\\[\\#5865f2\\],
-      .bg-\\[\\#5865f2\\] {
-        background-image: none !important;
-        box-shadow: none !important;
-        text-shadow: none !important;
+      .bg-call-screen-inchat-bg,
+      .dark\\:bg-call-screen-inchat-bg {
+        background: ${shade(PAPER, 45)} !important;
+        border: 2px solid ${edge} !important;
+        border-radius: 8px !important;
       }
 
+      .audio-seek { --audio-fill: ${A} !important; --audio-rest: rgba(255, 255, 255, 0.25) !important; }
+      html [data-msg-row][data-irc-mine="true"] .audio-seek { --audio-fill: ${A} !important; --audio-rest: rgba(255, 255, 255, 0.25) !important; }
+
+      /* Scrollbars */
       html, [data-chatbox], aside[data-component="sidebar"] {
         scrollbar-width: thin;
-        scrollbar-color: ${A} rgba(0, 0, 0, 0.3);
+        scrollbar-color: ${A} ${shade(PAPER, 45)};
       }
-
-      ${settings.spookyBlood ? `
-      /* ===== Blood variant: near-black surfaces, dripping headers, red wash ===== */
-      html body,
-      [data-component="suggestions-grid"] {
-        background-image:
-          radial-gradient(ellipse at 50% 125%, ${rgba(A, 30)}, transparent 55%),
-          radial-gradient(ellipse at 50% -20%, ${rgba(A, 12)}, transparent 50%) !important;
-      }
-
-      [data-chatbox] .bg-chat-message-list-bg,
-      [data-chatbox] .bg-group-card-chat-screen-bg {
-        background:
-          linear-gradient(${A}, ${A}) 0 0 / 100% 3px no-repeat,
-          linear-gradient(90deg, transparent 0 40px, ${shade(A, 8)} 40px 46px, transparent 46px) 0 0 / 97px 16px repeat-x,
-          radial-gradient(circle at 43px 16px, ${shade(A, 8)} 4.5px, transparent 5px) 0 0 / 97px 22px repeat-x,
-          linear-gradient(90deg, transparent 0 18px, ${shade(A, 20)} 18px 22px, transparent 22px) 0 0 / 143px 9px repeat-x,
-          radial-gradient(circle at 20px 9px, ${shade(A, 20)} 3.2px, transparent 3.7px) 0 0 / 143px 13px repeat-x,
-          linear-gradient(180deg, ${rgba(A, 10)}, transparent 30%),
-          ${PAPER} !important;
-      }
-
-      html [data-chatbox] [data-component="group-card-header"],
-      html [data-chatbox] header {
-        background: ${shade(PAPER, 45)} !important;
-        border-bottom: 3px solid ${shade(A, 5)} !important;
-      }
-
-      html [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
-        border-color: ${rgba(A, 60)} !important;
-      }
-
-      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
-        border-color: ${A} !important;
-        box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35) !important;
-      }
-
-      html [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before {
-        color: ${tone(A, 25)};
-      }
-
-      ${gridSlot} {
-        box-shadow: 0 0 0 2px ${shade(A, 20)}, 0 5px 0 ${K} !important;
-      }
-
-      ${gridSlot}.bg-modal-input-border-focus-color {
-        box-shadow: 0 0 0 2px ${A}, 0 0 0 5px ${rgba(A, 30)}, 0 5px 0 ${K} !important;
-      }
-
-      #${SPOOKY_FX_ID} .sp-web svg g { stroke: #c9a3a8; }
-      ` : ""}
-      /* ===== Overlay: pumpkins, bats, cobwebs, spider, ghost, moon ===== */
-      #${SPOOKY_FX_ID} {
-        position: fixed;
-        inset: 0;
-        z-index: 2147482999;
-        pointer-events: none;
-        overflow: hidden;
-      }
-
-      #${SPOOKY_FX_ID} > div { position: absolute; }
-      #${SPOOKY_FX_ID} svg { display: block; width: 100%; height: 100%; overflow: visible; }
-
-      #${SPOOKY_FX_ID} .sp-web { top: 0; width: 130px; height: 130px; }
-      #${SPOOKY_FX_ID} .sp-web-l { left: 0; }
-      #${SPOOKY_FX_ID} .sp-web-r { right: 0; transform: scaleX(-1); }
-      #${SPOOKY_FX_ID} .sp-spider { top: 0; right: 34px; width: 30px; height: 84px; transform-origin: 50% 0; }
-
-      #${SPOOKY_FX_ID} .sp-bat { width: 40px; height: 20px; }
-      #${SPOOKY_FX_ID} .sp-bat-1 { top: 46px; left: 34%; }
-      #${SPOOKY_FX_ID} .sp-bat-2 { top: 22px; left: 52%; width: 30px; height: 15px; }
-      #${SPOOKY_FX_ID} .sp-bat-3 { top: 70px; left: 72%; width: 34px; height: 17px; }
-
-      #${SPOOKY_FX_ID} .sp-tomb { right: 150px; bottom: -8px; width: 34px; height: 42px; }
-      #${SPOOKY_FX_ID} .sp-pump-a { right: 6px; bottom: -14px; width: 76px; height: 70px; }
-      #${SPOOKY_FX_ID} .sp-pump-b { right: 80px; bottom: -12px; width: 50px; height: 46px; }
-      #${SPOOKY_FX_ID} .sp-pump-c { right: 118px; bottom: -10px; width: 38px; height: 35px; }
-      #${SPOOKY_FX_ID} .sp-eyes { left: 8px; bottom: 74px; width: 34px; height: 15px; opacity: 0.85; }
-      #${SPOOKY_FX_ID} .sp-drips { top: 0; left: 0; width: 100%; height: 64px; opacity: 0.95; }
-      #${SPOOKY_FX_ID} .sp-skull { left: 78px; bottom: -6px; width: 34px; height: 40px; }
-      #${SPOOKY_FX_ID} .sp-splat { right: 210px; bottom: -22px; width: 80px; height: 62px; opacity: 0.9; }
 
       ${fx ? `
-      #${SPOOKY_FX_ID} .sp-bat-1 { animation: sp-drift 9s ease-in-out infinite; }
-      #${SPOOKY_FX_ID} .sp-bat-2 { animation: sp-drift 7s ease-in-out -2s infinite; }
-      #${SPOOKY_FX_ID} .sp-bat-3 { animation: sp-drift 11s ease-in-out -5s infinite; }
-      #${SPOOKY_FX_ID} .sp-spider { animation: sp-sway 4s ease-in-out infinite; }
+        #${SPOOKY_FX_ID} {
+          position: fixed;
+          inset: 0;
+          pointer-events: none;
+          z-index: 10000;
+          overflow: hidden;
+        }
 
-      @keyframes sp-drift { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(34px, 12px); } }
-      @keyframes sp-sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+        #${SPOOKY_FX_ID} .sp-web { position: absolute; width: 140px; height: 140px; }
+        #${SPOOKY_FX_ID} .sp-web-l { top: 0; left: 0; }
+        #${SPOOKY_FX_ID} .sp-web-r { top: 0; right: 0; }
 
-      @media (prefers-reduced-motion: reduce) {
-        #${SPOOKY_FX_ID} > div { animation: none !important; }
-      }` : ""}
+        #${SPOOKY_FX_ID} .sp-spider {
+          position: absolute;
+          top: 100px;
+          left: 110px;
+          width: 32px;
+          height: 38px;
+          animation: sp-drop 8s ease-in-out infinite;
+          transform-origin: top center;
+        }
+
+        #${SPOOKY_FX_ID} .sp-bat { position: absolute; width: 44px; height: 26px; }
+        #${SPOOKY_FX_ID} .sp-bat-1 { top: 22px; left: 34%; animation: sp-flutter 7s ease-in-out infinite; }
+        #${SPOOKY_FX_ID} .sp-bat-2 { top: 48px; right: 28%; animation: sp-flutter 9s ease-in-out infinite 2s; }
+        #${SPOOKY_FX_ID} .sp-bat-3 { top: 80px; left: 62%; animation: sp-flutter 8s ease-in-out infinite 4s; }
+
+        #${SPOOKY_FX_ID} .sp-tomb { position: absolute; bottom: 8px; right: 18px; width: 42px; height: 50px; }
+        #${SPOOKY_FX_ID} .sp-pump { position: absolute; }
+        #${SPOOKY_FX_ID} .sp-pump-a { bottom: 8px; left: 265px; width: 46px; height: 40px; }
+        #${SPOOKY_FX_ID} .sp-pump-b { bottom: 8px; right: 65px; width: 38px; height: 32px; }
+        #${SPOOKY_FX_ID} .sp-pump-c { bottom: 8px; left: 315px; width: 34px; height: 30px; }
+
+        #${SPOOKY_FX_ID} .sp-eyes {
+          position: absolute;
+          bottom: 110px;
+          left: 18px;
+          width: 32px;
+          height: 12px;
+          animation: sp-blink 5s steps(1) infinite;
+        }
+
+        #${SPOOKY_FX_ID} .sp-drips { position: absolute; top: 0; left: 0; right: 0; width: 100%; height: 54px; }
+        #${SPOOKY_FX_ID} .sp-skull { position: absolute; top: 8px; right: 12px; width: 40px; height: 46px; }
+        #${SPOOKY_FX_ID} .sp-splat { position: absolute; bottom: 12px; right: 120px; width: 60px; height: 46px; }
+
+        @keyframes sp-flutter {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          25% { transform: translate(8px, -6px) rotate(4deg); }
+          50% { transform: translate(-6px, 4px) rotate(-3deg); }
+          75% { transform: translate(4px, 6px) rotate(2deg); }
+        }
+
+        @keyframes sp-drop {
+          0%, 100% { transform: translateY(0); }
+          40% { transform: translateY(35px); }
+          60% { transform: translateY(30px); }
+        }
+
+        @keyframes sp-blink {
+          0%, 94%, 100% { opacity: 1; }
+          95%, 98% { opacity: 0; }
+        }
+      ` : ""}
     `;
   }
 
-  // Pick black or white text for a background colour (whichever has more contrast).
-  function inkOn(hex) {
-    const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || "").trim());
-    if (!m) return "#111111";
-    const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
-    const n = parseInt(m[1], 16);
-    const L = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
-    const darkText = (L + 0.05) / 0.05;      // contrast of black text
-    const lightText = 1.05 / (L + 0.05);     // contrast of white text
-    return darkText >= lightText ? "#111111" : "#ffffff";
-  }
-
-  function buildBrutalCss(rawSettings, fontStack) {
+function buildBrutalCss(rawSettings, fontStack) {
     // Text colours follow the surface they sit on, so bright colours always get dark text.
     const settings = { ...rawSettings, textColor: inkOn(rawSettings.bubbleColor) };
     const iA = inkOn(settings.accentColor);
     const iS = inkOn(settings.secondaryColor || "#ff90e8");
     const iP = inkOn(settings.bubbleColor);
     const iSide = inkOn(settings.sidebarColor);
+    const iCard = inkOn(settings.cardColor);
     const SIDE = settings.sidebarColor;
+    const CARD = settings.cardColor;
     const A = settings.accentColor;
     const S = settings.secondaryColor || "#ff90e8";
+    const PB = settings.bubbleColor;
     const K = "#111111";
-    const head = `"Bebas Neue", "Impact", "Arial Narrow", sans-serif`;
-    const mono = `"Space Mono", "Courier New", monospace`;
-    const body = settings.fontFamily === "default" ? `"Space Grotesk", "Segoe UI", Arial, sans-serif` : fontStack;
-    const base = buildArcadeCss(settings, body);
-    const gridSlot = `[data-component="suggestions-grid"] > div:not(.fixed) > div.relative.block.size-full > div[data-chat-id]`;
+    const head = '"Bebas Neue", "Impact", "Arial Narrow", sans-serif';
+    const mono = '"Space Mono", "Courier New", monospace';
+    const body = settings.fontFamily === "default" ? '"Space Grotesk", "Segoe UI", Arial, sans-serif' : fontStack;
+    const gridSlot = '[data-component="suggestions-grid"] > div:not(.fixed) > div.relative.block.size-full > div[data-chat-id]';
+    const pill = `html [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]),
+      aside[data-component="sidebar"] [data-component="add-interest-input"],
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a)`;
 
-    return base + `
-      /* ===== Neo-brutalist layer ===== */
+    return `
+      /* =========================================================
+         NEO-BRUTALIST STYLE: flat colour, 2px black outlines, 3px hard shadows
+         ========================================================= */
+
+      :root,
+      :host,
+      html,
+      html[data-theme="dark"],
+      html[data-theme="light"] {
+        --call-screen-inchat-bg: ${K} !important;
+        --color-call-screen-inchat-bg: ${K} !important;
+        --card-header-in-call-bg: ${A} !important;
+        --msg-date-label-color: ${K} !important;
+        --msg-time-label-color: ${K} !important;
+        --color-msg-date-label-color: ${K} !important;
+        --color-msg-time-label-color: ${K} !important;
+        --msg-reply-text-color: ${K} !important;
+        --color-msg-reply-text-color: ${K} !important;
+      }
+
+      html {
+        background-color: ${settings.bgColor} !important;
+      }
 
       html body,
       [data-component="suggestions-grid"] {
+        background-color: ${settings.bgColor} !important;
         background-image: radial-gradient(rgba(0, 0, 0, 0.16) 1px, transparent 1.3px) !important;
         background-size: 18px 18px !important;
       }
 
+      [data-component="suggestions-grid"]:not(.fixed):not(.absolute) {
+        position: relative !important;
+      }
+
+      [data-component="suggestions-grid"] > div:not(.fixed) {
+        position: relative;
+        z-index: 1;
+      }
+
+      [data-component="suggestions-grid"]::before,
+      [data-component="suggestions-grid"]::after { display: none !important; }
+
+      /* Chat container: flat card with crisp 2px border and clean offset shadow */
       ${gridSlot} {
         border-radius: 6px !important;
-        box-shadow: 0 0 0 2px ${K}, 6px 6px 0 2px ${K} !important;
+        background: ${CARD} !important;
+        border: 2px solid ${K} !important;
+        box-shadow: 4px 4px 0 ${K} !important;
       }
 
       ${gridSlot}.bg-modal-input-border-focus-color {
-        box-shadow: 0 0 0 2px ${K}, 0 0 0 6px ${A}, 0 0 0 8px ${K}, 8px 8px 0 8px ${K} !important;
+        background: ${CARD} !important;
+        border: 2px solid ${K} !important;
+        box-shadow: 4px 4px 0 ${K}, 0 0 0 2px ${A} !important;
       }
 
+      [data-chatbox],
+      [data-chatbox] > div,
+      [data-chatbox] > div > div {
+        border-radius: 6px !important;
+      }
+
+      [data-chatbox] {
+        font-family: ${body};
+      }
+
+      /* Header: flat solid accent with Bebas Neue typography */
       html [data-chatbox] [data-component="group-card-header"],
       html [data-chatbox] header {
+        position: relative !important;
+        background: ${A} !important;
         border-bottom: 2px solid ${K} !important;
         box-shadow: none !important;
         border-radius: 4px 4px 0 0 !important;
@@ -3488,6 +4083,8 @@
       [data-chatbox] [data-component="group-card-header"]::before,
       [data-chatbox] header::before { background: none !important; }
 
+      [data-chatbox] header::after { display: none !important; }
+
       html [data-chatbox] [data-component="group-card-header"] p,
       html [data-chatbox] header [data-cy-title] {
         font-family: ${head} !important;
@@ -3495,27 +4092,143 @@
         line-height: 1.1 !important;
         letter-spacing: 0.03em !important;
         text-transform: uppercase !important;
+        color: ${iA} !important;
+        text-shadow: none !important;
       }
 
-      html [data-chatbox] header img { border-radius: 50% !important; box-shadow: 0 0 0 2px ${K} !important; }
+      html [data-chatbox] header button,
+      html [data-chatbox] header svg {
+        color: ${iA} !important;
+        filter: none !important;
+      }
 
+      html [data-chatbox] header img {
+        border-radius: 50% !important;
+        box-shadow: 0 0 0 2px ${K} !important;
+      }
+
+      /* Message screen: clean card background */
       [data-chatbox] .bg-chat-message-list-bg,
       [data-chatbox] .bg-group-card-chat-screen-bg {
-        background: radial-gradient(rgba(0, 0, 0, 0.09) 1px, transparent 1.3px) 0 0 / 16px 16px, ${settings.cardColor} !important;
+        background:
+          radial-gradient(rgba(0, 0, 0, 0.09) 1px, transparent 1.3px) 0 0 / 16px 16px,
+          ${CARD} !important;
+        box-shadow: none !important;
       }
 
+      /* Date and time separators: high-contrast flat badge */
+      .text-msg-date-label-color,
+      .text-msg-time-label-color,
+      [data-chatbox] .text-msg-date-label-color,
+      [data-chatbox] .text-msg-time-label-color {
+        color: ${K} !important;
+        font-family: ${mono} !important;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        text-shadow: none !important;
+      }
+
+      [data-chatbox] div.text-msg-date-label-color,
+      [data-chatbox] div.text-msg-time-label-color {
+        background-color: #ffffff !important;
+        border: 2px solid ${K} !important;
+        border-radius: 99px !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+        padding: 2px 14px !important;
+        width: fit-content !important;
+        margin: 6px auto !important;
+      }
+
+      ${settings.ircMode ? `
+        /* Explicit IRC Mode in Neo-Brutalist */
+        [data-msg-row] > div.mt-\\[4px\\].h-\\[16px\\],
+        [data-msg-row] img.size-\\[30px\\],
+        [data-msg-row] > div > div.flex.items-baseline.gap-\\[6px\\],
+        [data-msg-row] > div > p.block.w-fit.text-left.text-\\[11px\\].font-bold,
+        [data-msg-row] span.invisible.absolute.right-full {
+          display: none !important;
+        }
+
+        [data-msg-row] {
+          min-height: 24px;
+          padding-top: 2px !important;
+          padding-bottom: 2px !important;
+        }
+
+        [data-msg-row][data-irc-mine="true"] [data-msg-actions].contents {
+          display: inline-flex !important;
+          order: 10 !important;
+          margin-left: auto !important;
+        }
+
+        html [data-msg-row]:not([data-irc-mine="true"]) [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before { color: ${iP}; }
+        html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before { color: ${iS}; }
+
+        html [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before,
+        html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before {
+          display: block;
+          content: attr(data-cy-nick) "   " attr(data-cy-time);
+          font-family: ${mono};
+          font-size: 10px;
+          font-weight: 700;
+          text-transform: uppercase;
+          text-shadow: none;
+          opacity: 0.8;
+        }
+      ` : `
+        /* Neo-brutalist chat with avatars & right-aligned own bubbles */
+        html [data-chatbox] [data-msg-row] img.size-\\[30px\\] {
+          border: 2px solid ${K} !important;
+          box-shadow: 2px 2px 0 ${K} !important;
+          border-radius: 4px !important;
+        }
+
+        html [data-chatbox] [data-msg-row] div.flex.items-baseline.gap-\\[6px\\] p {
+          font-family: ${body} !important;
+          font-size: 11px !important;
+          color: ${K} !important;
+          font-weight: 700 !important;
+          letter-spacing: 0.02em !important;
+        }
+
+        html [data-chatbox] [data-msg-row] div.flex.items-baseline.gap-\\[6px\\] span {
+          font-family: ${mono} !important;
+          font-size: 9px !important;
+          color: #555555 !important;
+          font-weight: 600 !important;
+        }
+      `}
+
+      /* Suppress redundant large link preview cards */
+      [data-msg-bubble="true"] > div.flex.max-w-full.flex-col.overflow-hidden,
+      [data-msg-bubble="true"] > div.flex.flex-col.items-start.justify-center,
+      [data-msg-bubble="true"] div:has(> a[target="_blank"] > img) {
+        display: none !important;
+      }
+
+      /* Message bubbles: 2px black outline, 3px solid black offset shadow */
       html [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
         border: 2px solid ${K} !important;
         border-radius: 6px !important;
         box-shadow: 3px 3px 0 ${K} !important;
+        background-image: none !important;
+        background-color: ${PB} !important;
+        color: ${iP} !important;
+      }
+
+      html [data-msg-row] [data-msg-bubble="true"]:not([data-message-type="image"]):not([data-message-type="intro"]),
+      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="image"]):not([data-message-type="intro"]) {
+        background-image: none !important;
       }
 
       html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"]:not([data-message-type="intro"]) {
+        background-color: ${S} !important;
         border-color: ${K} !important;
         box-shadow: 3px 3px 0 ${K} !important;
+        color: ${iS} !important;
       }
 
-      /* Dark text on every bubble (pink and white are both light) */
+      /* Bubble text readability */
       html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block,
       html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] > div.block span,
       html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] [data-msg-transcript],
@@ -3533,27 +4246,151 @@
         color: ${iP} !important;
       }
 
-      html [data-msg-row]:not([data-irc-mine="true"]) [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before { color: ${iP}; }
-      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before { color: ${iS}; }
-
-      html [data-msg-row] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"]):not([data-message-type="intro"])::before,
-      html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"][data-cy-first="true"]:not([data-message-type="image"])::before {
-        font-family: ${mono};
-        font-size: 10px;
-        font-weight: 700;
-        text-transform: uppercase;
-        text-shadow: none;
-        opacity: 0.8;
-      }
-
       html [data-msg-row][data-irc-mine="true"] [data-msg-bubble="true"] a { color: ${iS} !important; }
       html [data-msg-row] [data-msg-bubble="true"] a { color: ${iP} !important; text-decoration: underline !important; font-weight: 700 !important; }
 
-      .audio-seek { --audio-fill: ${K} !important; --audio-rest: rgba(0, 0, 0, 0.25) !important; }
-      html [data-msg-row][data-irc-mine="true"] .audio-seek { --audio-fill: ${K} !important; --audio-rest: rgba(0, 0, 0, 0.25) !important; }
+      [data-component="chat-message-reply"] > div.bg-msg-bubble-reply-bg {
+        background: #ffffff !important;
+        border: 2px solid ${K} !important;
+        border-radius: 4px !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+      }
+
+      [data-msg-reactions],
+      .bg-buble-reaction-bg {
+        background: #ffffff !important;
+        border: 2px solid ${K} !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+        border-radius: 4px !important;
+        color: ${K} !important;
+      }
+
+      .bg-buble-reacted-bg,
+      [data-msg-reactions].bg-buble-reacted-bg {
+        background: ${S} !important;
+        color: ${iS} !important;
+        border: 2px solid ${K} !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+      }
+
+      /* FLAT NEO-BRUTALIST INPUT BAR: NO 3D BEVEL, NO CREAM RETRO BACKGROUND */
+      [data-component="chat-input"] {
+        background: ${CARD} !important;
+        border-top: 2px solid ${K} !important;
+        box-shadow: none !important;
+        border-radius: 0 0 4px 4px !important;
+      }
+
+      [data-component="chat-input"] .bg-input-text-msg-form {
+        background: #ffffff !important;
+        background-image: none !important;
+        border: 2px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+      }
+
+      [data-component="chat-input"] textarea,
+      [data-component="chat-input"] input,
+      [data-component="chat-input"] [contenteditable] {
+        color: ${K} !important;
+        font-family: ${body} !important;
+        font-weight: 500 !important;
+        caret-color: ${K} !important;
+      }
+
+      [data-component="chat-input"] ::placeholder {
+        color: #777777 !important;
+        font-family: ${body} !important;
+      }
+
+      [data-component="chat-input"] svg {
+        color: ${K} !important;
+        stroke: ${K} !important;
+      }
+
+      /* Mic button and auxiliary controls inside the input form: no colliding offset shadows */
+      [data-component="chat-input"] [data-component="mic-button"],
+      [data-component="chat-input"] [data-component="mic-button"].bg-\\[\\#5865f2\\] {
+        background: ${A} !important;
+        background-image: none !important;
+        border: 1.5px solid ${K} !important;
+        border-radius: 4px !important;
+        box-shadow: none !important;
+        color: ${iA} !important;
+        transition: transform 0.08s ease, background-color 0.08s ease !important;
+      }
+
+      [data-component="chat-input"] [data-component="mic-button"]:hover {
+        background: ${S} !important;
+        border-color: ${K} !important;
+        box-shadow: none !important;
+        transform: none !important;
+        color: ${iS} !important;
+      }
+
+      [data-component="chat-input"] [data-component="mic-button"]:active {
+        box-shadow: none !important;
+        transform: scale(0.96) !important;
+      }
+
+      [data-component="chat-input"] button:not([data-component="mic-button"]) {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+      }
+
+      /* Standalone buttons outside input (e.g. quick call, header buttons) */
+      html [data-chatbox] button.bg-primary:not([data-component="chat-input"] button) {
+        background: ${A} !important;
+        background-image: none !important;
+        border: 2px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+        color: ${iA} !important;
+        transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+      }
+
+      html [data-chatbox] button.bg-primary:not([data-component="chat-input"] button):hover {
+        background: ${S} !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+        transform: translate(-1px, -1px) !important;
+        color: ${iS} !important;
+      }
+
+      html [data-chatbox] button.border[class*="rounded"]:not([data-component="chat-input"] *),
+      aside[data-component="sidebar"] [data-component="add-interest-input"],
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a) {
+        border: 2px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+        background: ${A} !important;
+        background-image: none !important;
+        color: ${iA} !important;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        transition: transform 0.08s ease, box-shadow 0.08s ease !important;
+      }
+
+      html [data-chatbox] button.border[class*="rounded"]:not([data-component="chat-input"] *):hover,
+      aside[data-component="sidebar"] [data-component="add-interest-input"]:hover,
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a):hover {
+        background: ${S} !important;
+        box-shadow: 4px 4px 0 ${K} !important;
+        color: ${iS} !important;
+        transform: translate(-1px, -1px);
+      }
+
+      html [data-chatbox] button.border[class*="rounded"]:not([data-component="chat-input"] *):active,
+      aside[data-component="sidebar"] [data-component="add-interest-input"]:active,
+      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a):active {
+        box-shadow: 1px 1px 0 ${K} !important;
+        transform: translate(2px, 2px);
+      }
 
       /* Sidebar: flat panel, white blocks, black text */
       html aside[data-component="sidebar"] {
+        background-color: ${SIDE} !important;
         background-image: radial-gradient(rgba(0, 0, 0, 0.16) 1px, transparent 1.3px) !important;
         background-size: 18px 18px !important;
         border-right: 2px solid ${K} !important;
@@ -3563,26 +4400,29 @@
 
       aside[data-component="sidebar"] article.group\\/row,
       aside[data-component="sidebar"] [data-interest-chip],
-      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button,
-      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a {
+      aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > button,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > a {
         background-color: #ffffff !important;
+        background-image: none !important;
         border: 2px solid ${K} !important;
         border-radius: 6px !important;
         box-shadow: 3px 3px 0 ${K} !important;
+        color: ${K} !important;
       }
 
       aside[data-component="sidebar"] article.group\\/row:hover,
       aside[data-component="sidebar"] [data-interest-chip]:hover,
-      aside[data-component="sidebar"] > div.mb-\\[7px\\] > button:hover,
-      aside[data-component="sidebar"] > div.mb-\\[7px\\] > a:hover {
+      aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > button:hover,
+      aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > a:hover {
         background-color: ${S} !important;
-        box-shadow: 3px 3px 0 ${K} !important;
+        box-shadow: 4px 4px 0 ${K} !important;
+        transform: translate(-1px, -1px);
       }
 
       html body aside[data-component="sidebar"] article.group\\/row.group\\/row :is(span, div, p),
       html body aside[data-component="sidebar"] [data-interest-chip] :is(span, div),
-      html body aside[data-component="sidebar"] > div.mb-\\[7px\\] > :is(button, a),
-      html body aside[data-component="sidebar"] > div.mb-\\[7px\\] > :is(button, a) * {
+      html body aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > :is(button, a),
+      html body aside[data-component="sidebar"] > div.mb-\\[7px\\].mb-\\[7px\\] > :is(button, a) * {
         color: ${K} !important;
         text-shadow: none !important;
       }
@@ -3598,22 +4438,12 @@
       html aside[data-component="sidebar"] > div.absolute.bottom-2 {
         background-color: #ffffff !important;
         border-top: 2px solid ${K} !important;
+        box-shadow: none !important;
       }
 
       html body aside[data-component="sidebar"] > div.absolute.bottom-2 :is(span, p, div) {
         color: ${K} !important;
         text-shadow: none !important;
-      }
-
-      html [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]),
-      aside[data-component="sidebar"] [data-component="add-interest-input"],
-      html aside[data-component="sidebar"] > div.absolute.bottom-2 :is(button, a) {
-        border: 2px solid ${K} !important;
-        border-radius: 6px !important;
-        box-shadow: 3px 3px 0 ${K} !important;
-        background-color: ${A} !important;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
       }
 
       aside[data-component="sidebar"] [data-cy-badge] {
@@ -3624,6 +4454,7 @@
         box-shadow: 2px 2px 0 ${K} !important;
       }
 
+      /* Call section */
       .bg-call-screen-inchat-bg,
       .dark\\:bg-call-screen-inchat-bg {
         background: ${K} !important;
@@ -3632,71 +4463,62 @@
         box-shadow: 4px 4px 0 ${K} !important;
       }
 
-      html body aside[data-component="sidebar"]:not(#bk) article.group\\/row *,
-      html body aside[data-component="sidebar"]:not(#bk) [data-interest-chip],
-      html body aside[data-component="sidebar"]:not(#bk) [data-interest-chip] *,
-      html body aside[data-component="sidebar"]:not(#bk) > div.absolute.bottom-2,
-      html body aside[data-component="sidebar"]:not(#bk) > div.absolute.bottom-2 * {
-        color: ${K} !important;
-        text-shadow: none !important;
-      }
+      .audio-seek { --audio-fill: ${K} !important; --audio-rest: rgba(0, 0, 0, 0.25) !important; }
+      html [data-msg-row][data-irc-mine="true"] .audio-seek { --audio-fill: ${K} !important; --audio-rest: rgba(0, 0, 0, 0.25) !important; }
 
-      html body [data-chatbox] button[class*="bg-[#C54445" i],
-      html body [data-chatbox] button[class*="bg-[#e5484d" i],
-      html body [data-chatbox] button[class*="bg-[#C54445" i] * {
-        color: ${K} !important;
-        text-shadow: none !important;
-      }
-
-      /* Auto contrast: text colour follows the colour it sits on */
-      html body [data-chatbox] [data-component="group-card-header"] p,
-      html body [data-chatbox] header [data-cy-title],
-      html body [data-chatbox] header button,
-      html body [data-chatbox] header svg {
-        color: ${iA} !important;
-      }
-
-      html body [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]),
-      html body [data-chatbox] button.border[class*="rounded"]:not([data-component="mic-button"]) *,
-      html body aside[data-component="sidebar"]:not(#bk) [data-component="add-interest-input"],
-      html body aside[data-component="sidebar"]:not(#bk) [data-component="add-interest-input"] *,
-      html body aside[data-component="sidebar"]:not(#bk) > div.absolute.bottom-2 :is(button, a),
-      html body aside[data-component="sidebar"]:not(#bk) > div.absolute.bottom-2 :is(button, a) * {
-        color: ${iA} !important;
-      }
-
-      html body [data-chatbox] button[class*="bg-[#C54445" i],
-      html body [data-chatbox] button[class*="bg-[#e5484d" i],
-      html body [data-chatbox] button[class*="bg-[#C54445" i] * {
-        color: ${iS} !important;
-      }
-
-      html body aside[data-component="sidebar"]:not(#bk) article.group\\/row:hover *,
-      html body aside[data-component="sidebar"]:not(#bk) [data-interest-chip]:hover,
-      html body aside[data-component="sidebar"]:not(#bk) [data-interest-chip]:hover *,
-      html body aside[data-component="sidebar"]:not(#bk) > div.mb-\\[7px\\] > :is(button, a):hover,
-      html body aside[data-component="sidebar"]:not(#bk) > div.mb-\\[7px\\] > :is(button, a):hover * {
-        color: ${iS} !important;
-      }
-
-      html body aside[data-component="sidebar"]:not(#bk) > div.-mb-0\\.5.mt-1\\.5 > p,
-      html body aside[data-component="sidebar"]:not(#bk) section > div.-mb-0\\.5 > span {
-        color: ${iSide} !important;
-      }
-
-      html body aside[data-component="sidebar"] [data-cy-badge] { color: ${iS} !important; }
-
-      .bg-buble-reacted-bg, [data-msg-reactions].bg-buble-reacted-bg {
-        background: ${S} !important;
-        color: ${iS} !important;
+      /* Interest chips in profile & sidebar: flat white boxes with black borders */
+      [data-interest-chip],
+      [data-interest-chip].dark\\:bg-black,
+      [data-interest-chip].dark\\:hover\\:bg-black,
+      html [data-interest-chip],
+      html [data-interest-chip].dark\\:bg-black {
+        background-color: #ffffff !important;
+        background-image: none !important;
         border: 2px solid ${K} !important;
+        border-radius: 6px !important;
+        box-shadow: 2px 2px 0 ${K} !important;
+        color: ${K} !important;
+      }
+
+      [data-interest-chip]:hover,
+      [data-interest-chip]:active,
+      [data-interest-chip]:focus,
+      [data-interest-chip].bg-interest-selected,
+      [data-interest-chip][class*="interest-selected"],
+      html [data-interest-chip]:hover,
+      html [data-interest-chip]:active,
+      html [data-interest-chip].bg-interest-selected {
+        background-color: ${S} !important;
+        background-image: none !important;
+        border: 2px solid ${K} !important;
+        box-shadow: 3px 3px 0 ${K} !important;
+        color: ${iS} !important;
+      }
+
+      [data-interest-chip] :is(span, p, div, button),
+      [data-interest-chip] .dark\\:text-black,
+      [data-interest-chip] .dark\\:text-\\[\\#171717\\],
+      [data-interest-chip] .text-text-color {
+        color: ${K} !important;
+        text-shadow: none !important;
+      }
+
+      [data-interest-chip]:hover :is(span, p, div, button),
+      [data-interest-chip]:active :is(span, p, div, button),
+      [data-interest-chip].bg-interest-selected :is(span, p, div, button) {
+        color: ${iS} !important;
+        text-shadow: none !important;
+      }
+
+      /* Scrollbars */
+      html, [data-chatbox], aside[data-component="sidebar"] {
+        scrollbar-width: thin;
+        scrollbar-color: ${K} rgba(0, 0, 0, 0.15);
       }
     `;
   }
 
-
-  // Textures are plain CSS gradients now (cheap to paint). No SVG filters are used.
-  function skeuoDefsMarkup() {
+function skeuoDefsMarkup() {
     return "";
   }
 
@@ -3992,7 +4814,8 @@
   // chrome.* APIs are dead. Detect that so it can clean itself up instead of fighting the new one.
   function contextAlive() {
     try {
-      return Boolean(chrome && chrome.runtime && chrome.runtime.id);
+      if (typeof chrome === "undefined" || !chrome.runtime) return true;
+      return Boolean(chrome.runtime.id);
     } catch (_) {
       return false;
     }
@@ -4044,6 +4867,32 @@
     return el;
   }
 
+  function syncNativeTheme(settings) {
+    try {
+      const mode = activeMode(settings);
+      let targetTheme = "dark";
+      if (mode === "brutal") {
+        targetTheme = "light";
+      } else if (mode === "irc" || mode === "cyber" || mode === "arcade" || mode === "skeuo" || mode === "spooky") {
+        targetTheme = "dark";
+      } else if (inkOn(settings.bgColor) === "#111111" && inkOn(settings.cardColor) === "#111111") {
+        targetTheme = "light";
+      } else {
+        targetTheme = "dark";
+      }
+
+      const currentTheme = document.documentElement.getAttribute("data-theme");
+      if (currentTheme !== targetTheme) {
+        document.documentElement.setAttribute("data-theme", targetTheme);
+      }
+      const storedTheme = window.localStorage.getItem("USER_SELECTED_THEME");
+      if (storedTheme !== targetTheme) {
+        window.localStorage.setItem("USER_SELECTED_THEME", targetTheme);
+        window.dispatchEvent(new Event("convose:theme-change"));
+      }
+    } catch (_) {}
+  }
+
   function applyStylesToDOM() {
     if (torn) return;
     const root = document.documentElement;
@@ -4059,6 +4908,7 @@
     const sig = JSON.stringify(currentSettings);
     if (sig !== appliedSig) {
       appliedSig = sig;
+      syncNativeTheme(currentSettings);
       cachedCss = buildStylesheet(currentSettings);
 
       const mode = activeMode(currentSettings);

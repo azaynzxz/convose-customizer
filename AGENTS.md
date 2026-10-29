@@ -174,21 +174,32 @@ Convose is built with **Next.js (App Router / Turbopack)** and **Tailwind CSS v4
   - Social link item chips: use `.bg-social-link-item-bg` (`--social-link-item-bg`) -> mapped to `settings.cardColor`.
   - Profile/Group Banner Placeholder (`[data-component="my-banner"]`, `[data-component="profile-banner"]`, `[data-component="group-banner"]`): when no custom image is set (`:not([style*="background-image"])`), Convose applies either a dark grey radial/linear gradient or an inline `background-color` extracted from the default avatar. We override `:not([style*="background-image"])` with a dot-matrix + linear gradient blended from `settings.bubbleColor` and `settings.cardColor`.
 
+### 3.7 Convose Native Theme Sync (`syncNativeTheme`)
+- **Native Theme Architecture**:
+  - Convose reads `localStorage.getItem("USER_SELECTED_THEME")` ("light" or "dark") and sets `document.documentElement.setAttribute("data-theme", "light" | "dark")`.
+  - Convose listens on `window.addEventListener("convose:theme-change", ...)` to recompute internal Tailwind color classes.
+- **Customizer Sync Logic (`syncNativeTheme(settings)`)**:
+  - Neo-Brutalist themes and custom themes with bright surfaces (`inkOn(bgColor) === "#111111" && inkOn(cardColor) === "#111111"`) automatically sync Convose's native theme to `"light"`.
+  - Dark themes, IRC (`komanda-irc`), Arcade, Cyber, Skeuo, and Spooky automatically sync to `"dark"`.
+  - Updates `document.documentElement.setAttribute("data-theme", targetTheme)`, `localStorage.setItem("USER_SELECTED_THEME", targetTheme)`, and dispatches `window.dispatchEvent(new Event("convose:theme-change"))`.
+  - Ensures Convose native popups, dropdowns, and un-customized subcomponents match the active preset tone.
+
 ---
 
 ## 4. Experimental View: IRC Chat Style (`settings.ircMode`)
 
-When `ircMode` is enabled in the popup:
+IRC Chat Style is strictly scoped to the `komanda-irc` preset or when `settings.ircMode === true`. It is **never** applied by default to other themes (e.g., Brutalism, Arcade, Skeuo, Spooky).
+
 1. **`syncIrcMetadata()` in `content.js`**:
    - Iterates through each `[data-chatbox]` (and its `[data-msg-row]` children in top-to-bottom DOM order).
    - Determines whether each message row is sent by the current user (`isMine`) or a partner.
    - Extracts the message timestamp (`timeStr`) from `bubble > span.hidden`, `data-tooltip-content`, or `span.text-[10px]`, carrying forward `lastTime` for grouped continuation rows.
    - Extracts the sender's nickname (`nick`) and color (`nickColor`) from `p.cursor-pointer.font-bold` (or reply headers), carrying forward `lastPartnerNick` and `lastPartnerColor` across grouped continuation rows from the same speaker, and falling back to deterministic nickname hashing (`IRC_NICK_PALETTE`).
-   - Stamps `data-irc-time` on `bubble.parentElement` (`div:has(> [data-msg-bubble="true"])`) and `data-irc-nick` + `--irc-nick-color` on `bubble` (`[data-msg-bubble="true"]`).
+   - Stamps `data-irc-mine="true"` on own rows, `data-irc-time` on `bubble.parentElement`, and `data-irc-nick` + `--irc-nick-color` on `[data-msg-bubble="true"]`.
    - Does **not** insert or remove DOM nodes inside React's tree, preventing React reconciliation/hydration crashes.
 
 2. **IRC Chat Layout CSS**:
-   - **Avatars Hidden in Chat**: Hides `[data-msg-row] > div.mt-\[4px\].h-\[16px\]`, `[data-msg-row] img.size-\[30px\]`, and header group avatars, and prefixes group channel names with `#`.
+   - **Avatars Hidden in Chat**: Hides `[data-msg-row] > div.mt-\[4px\].h-\\[16px\]`, `[data-msg-row] img.size-\\[30px\]`, and header group avatars, and prefixes group channel names with `#`.
    - **Left-Alignment of Own Messages (`you:`)**:
      - On own messages (`mine === true`), Convose renders `<div class="contents" data-msg-actions="true">` (`display: contents`) *before* `[data-msg-bubble="true"]`, which exposes 4 invisible action buttons (~110px wide) to the left of the message.
      - Overriding `[data-msg-row] [data-msg-actions].contents { display: inline-flex !important; order: 10 !important; margin-left: auto !important; }` boxes those buttons and pins them to the far right edge of the row so `you:` aligns flush-left with partner messages.
@@ -207,53 +218,72 @@ When `ircMode` is enabled in the popup:
 
 ## 4b. Experimental View: Cyber Style (`settings.cyberMode`)
 
-A sci-fi / Jarvis-style HUD look (references: Cyberpunk 2077 chat UI, HUD element sheets, a "Lower Planetary Union" archive card). It is a separate chat look from IRC mode: the popup makes `ircMode` and `cyberMode` mutually exclusive, and `buildStylesheet()` also guards (`ircMode && !cyberMode`). Related settings: `cyberFx` (scanlines, glow, sweep, blink) and `secondaryColor` (own-message colour; `accentColor` is the partner/HUD colour).
+A sci-fi / Jarvis-style HUD look (references: Cyberpunk 2077 chat UI, HUD element sheets, a "Lower Planetary Union" archive card). Related settings: `cyberFx` (scanlines, glow, sweep, blink) and `secondaryColor` (own-message colour; `accentColor` is the partner/HUD colour).
 
-1. **Entry point**: `buildCyberCss(settings, fontStack)` in `content.js`, appended last in `buildStylesheet()` so it wins over base rules at equal specificity. Helpers `cyberFrame()` and `cyberPolygon()` build chamfered outlines.
+1. **Entry point**: `buildCyberCss(settings, fontStack)` in `content.js`. Helpers `cyberFrame()` and `cyberPolygon()` build chamfered outlines.
 2. **Metadata (`syncIrcMetadata()` also runs for cyber mode)**: stamps `data-irc-mine` on the row, `data-cy-meta` (`NICK // HH:MM`) and `data-cy-first="true"` (first bubble of each speaker block) on `[data-msg-bubble]`. Attributes only, no DOM nodes inside React's tree.
-3. **Bubbles**: partner = cut top-right/bottom-left, accent colour; own = cut top-left/bottom-right, `secondaryColor`. Fill uses `background-image` (not `background-color`) so Convose's `!important` hover colour rules cannot override it. The outline is a layered-gradient `::after` frame (a clip-path would cut a real border). The `NICK // TIME` tag is `::before` on the bubble. Glow is a `drop-shadow` on the wrapper `div:has(> [data-msg-bubble])` because the bubble's own clip-path would cut it.
-4. **Chat boxes**: frame and corner brackets are `::before` / `::after` on the grid slot `div[data-chat-id]` (strict child-combinator path, see the 3.3 pitfall). The cut corners are faked with background-coloured triangles instead of `clip-path`, because clip-path would clip popovers (emoji picker, menus). Do not add `clip-path` to the slot or the input container.
-5. **Avoid clip-path on interactive containers** (input bar, sidebar rows). Use borders / inset box-shadows instead.
-6. **Overlay**: `syncCyberOverlay()` injects `#convose-cyber-hud` on `<html>` (top frame only): viewport corner brackets, top title tab with a live clock, and a scan sweep. `pointer-events: none`. The clock updates `nodeValue` (characterData) so the childList `MutationObserver` is not triggered every second. Removed when cyber mode is off.
-7. **Fonts**: `Rajdhani` (message text) + `Share Tech Mono` (labels/HUD) via the `cyber` entry in `GOOGLE_FONT_URLS`; a user-chosen Font Family overrides the message font.
-8. **Stylesheet caching**: `applyStylesToDOM()` skips `replaceSync` when the CSS string is unchanged (`window.__convoseLastCss`) so CSS animations are not restarted on every DOM mutation.
-9. **Presets**: `cyber-hud`, `night-city`, `olive-union` set `cyberMode: true` and `ircMode: false`.
+3. **Bubbles**: partner = cut top-right/bottom-left, accent colour; own = cut top-left/bottom-right, `secondaryColor`. Fill uses `background-image` (not `background-color`) so Convose's `!important` hover colour rules cannot override it. The outline is a layered-gradient `::after` frame. The `NICK // TIME` tag is `::before` on the bubble. Glow is a `drop-shadow` on the wrapper `div:has(> [data-msg-bubble])`.
+4. **Chat boxes**: frame and corner brackets are `::before` / `::after` on the grid slot `div[data-chat-id]` (strict child-combinator path). Cut corners use background-coloured triangles instead of `clip-path` to avoid clipping popovers.
+5. **Interactive containers**: Avoid `clip-path` on input bar and sidebar rows; use borders and inset box-shadows instead.
+6. **Overlay**: `syncCyberOverlay()` injects `#convose-cyber-hud` on `<html>` (top frame only): viewport corner brackets, top title tab with live clock, and scan sweep. `pointer-events: none`. Clock updates `nodeValue` (characterData) to prevent triggering `MutationObserver`.
+7. **Fonts**: `Rajdhani` (message text) + `Share Tech Mono` (labels/HUD) via the `cyber` entry in `GOOGLE_FONT_URLS`.
+8. **Presets**: `cyber-hud`, `night-city`, `olive-union`.
 
 ---
 
 ## 4c. Experimental View: Skeuomorphic Style (`settings.skeuoMode`)
 
-Retro "real objects" look (denim, leather, paper, wood, brushed metal, glossy buttons). Mode priority is resolved by `activeMode()` in `content.js` (skeuo > cyber > irc); the popup also makes the three mode checkboxes mutually exclusive.
+Retro "real objects" look (denim, leather, paper, wood, brushed metal, glossy buttons). Priority: skeuo > arcade > brutal > spooky > cyber > irc.
 
-1. **Entry point**: `buildSkeuoCss(settings, fontStack)`. Palette mapping: `bgColor` = wood tint, `sidebarColor` = denim, `cardColor` = paper, `bubbleColor` = partner bubble paper, `accentColor` = glossy highlight, `secondaryColor` = own bubble, `textColor` = ink on paper. Sidebar and header text use fixed cream, not `textColor`.
-2. **Shared metadata**: skeuo reuses the cyber attributes written by `syncIrcMetadata()` / `syncCyberTags()` (`data-irc-mine`, `data-cy-first`, `data-cy-nick`, `data-cy-time`, `data-cy-title`, `data-cy-badge`). The `Name  time` tag is the bubble's `::before`.
-3. **Textures** are SVG filters injected by `syncSkeuoOverlay()` as `#convose-skeuo-defs` on `<html>`: `sk-wood` (streaky grain tinted from `bgColor`), `sk-leather` (diffuse-lit noise), `sk-grain` (page speckle). A filter on an empty pseudo-element makes feTurbulence produce the pixels, so no image or data URL (CSP safe). The pseudo-element has a flat fallback colour in case the filter fails. `cyberFx: false` turns all of them off.
-4. **Do not put a CSS `filter` on a container that holds popovers** (emoji picker, menus): it becomes the containing block for fixed descendants. Textures live on `::before` pseudo-elements only; the header children get `z-index` so they stay above the leather.
-5. **Glossy look**: `gloss(c)` builds a split-highlight gradient (bright top half, darker bottom half); `metal` is the grey equivalent. The bubble fill uses `background-image` so Convose's `!important` hover `background-color` rules cannot replace it.
-6. **Desk layering**: the grid's `::before` (wood) and `::after` (plank seams) are siblings of the chat canvas, so the canvas wrapper gets `position: relative; z-index: 1` to stay above the seams.
-7. **Overlay**: `#convose-skeuo-fx` (top frame only) holds the fine grain, vignette and the denim "Convose" tab. `pointer-events: none`.
-8. **Presets**: `walnut-denim`, `leather-brass`, `brushed-steel` set `skeuoMode: true` and turn the other modes off.
+1. **Entry point**: `buildSkeuoCss(settings, fontStack)`. Palette mapping: `bgColor` = wood tint, `sidebarColor` = denim, `cardColor` = paper, `bubbleColor` = partner bubble paper, `accentColor` = glossy highlight, `secondaryColor` = own bubble, `textColor` = ink on paper.
+2. **Sidebar & Interest Contrast Fix**:
+   - Bright paper background is scoped strictly to non-sidebar / modal chips (`:not(aside) > * > [data-interest-chip]`).
+   - Sidebar interest chips (`html body aside[data-component="sidebar"] [data-interest-chip]`) use a dark inset denim surface (`linear-gradient(180deg, rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.15))`) with cream `${sideBright}` (`#fff6dc`) text, preventing bright-on-bright contrast issues.
+   - Date and time separators in chat use dark ink (`${INK}`) on warm paper with clear text shadows.
+3. **Chat Layout**:
+   - When `settings.ircMode` is false: partner avatars are visible with rounded frames (`border-radius: 6px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4)`), partner names are visible above group messages, and own messages remain right-aligned.
+   - When `settings.ircMode` is true: compact IRC format is activated with tag line pseudo-elements.
+4. **Textures**: Injected by `syncSkeuoOverlay()` as `#convose-skeuo-defs` on `<html>`: `sk-wood`, `sk-leather`, `sk-grain`. CSP-safe inline SVG filters via `feTurbulence`. Flat fallbacks are provided if filters are disabled.
+5. **Glossy Buttons**: Split-highlight gradients via `gloss(c)` and `metal`. Bubble fills use `background-image` so Convose's `!important` hover rules cannot wipe them.
+6. **Overlay**: `#convose-skeuo-fx` (top frame only) provides fine grain, vignette, and denim header tab.
+7. **Presets**: `walnut-denim`, `leather-brass`, `brushed-steel`.
+
+---
+
+## 4d. Experimental View: Arcade Style (`settings.arcadeMode`)
+
+8-bit retro arcade aesthetic with pixel borders, brick-patterned sidebar, and Press Start 2P headers.
+
+1. **Entry point**: `buildArcadeCss(settings, fontStack)` in `content.js`.
+2. **Sidebar Contrast Fix**:
+   - Computes `sideText` and `sideTitle` based on surface luminance.
+   - Sidebar chat rows, interest chips, and buttons use bright gold/white (`#ffffff` / `#f5a623`) with a crisp black shadow (`text-shadow: 1px 1px 0 #000`) so all rows stand out clearly on the dark brick sidebar.
+3. **Chat Layout**:
+   - When `settings.ircMode` is false: partner avatars are visible (`img.size-[30px]` with 2px solid black border and 2px shadow), partner names appear above group bubbles, and own messages remain right-aligned (`justify-end`).
+   - When `settings.ircMode` is true: compact IRC row format is applied.
+4. **Preset**: `arcade`.
+
+---
+
+## 4e. Experimental View: Neo-Brutal Style (`settings.brutalMode`)
+
+Flat neo-brutalist aesthetic with high-contrast surfaces, solid black outlines, and hard offset drop shadows.
+
+1. **Entry point**: `buildBrutalCss(rawSettings, fontStack)` in `content.js`.
+2. **Stacked Border Elimination**:
+   - Chat slot (`${gridSlot}`) uses a crisp single `border: 2px solid #111 !important; box-shadow: 4px 4px 0 #111 !important;` (removed outer double-stroke `0 0 0 2px`).
+   - Chat input form (`.bg-input-text-msg-form`) uses a clean `border: 2px solid #111 !important; box-shadow: 2px 2px 0 #111 !important;`.
+   - Controls inside the input form (`[data-component="chat-input"] [data-component="mic-button"]` and auxiliary buttons) use `box-shadow: none !important; border: 1.5px solid #111 !important;` so shadows do not collide or produce thick black blobs.
+3. **Chat Layout**:
+   - When `settings.ircMode` is false: partner avatars are visible with 2px black border and 2px shadow (`border-radius: 4px`), partner usernames and timestamps are displayed above bubbles, and own messages remain right-aligned with no `order: 10` displacement.
+   - When `settings.ircMode` is true: compact IRC single-line layout is activated.
+4. **Auto-Contrast**: `inkOn(hex)` selects `#111111` or `#ffffff` for text on any surface. Automatically pairs with native `data-theme="light"` via `syncNativeTheme`.
+5. **Presets**: `gumroad-pink`, `taxi-brutal`, `mint-brutal`, `lilac-brutal`, `sky-brutal`, `tangerine-brutal`, `ink-brutal`.
 
 ---
 
 ## 5. Development Rules & Constraints
-- **Strict Ban on Emojis**: Never use emojis in any code, HTML, CSS, comments, logs, or UI strings. Use SVG icons or plain text badges (such as `EXP`).
-- **Syntax Validation**: Always run `node --check "D:\Praktek\convose-customizer\content.js"; node --check "D:\Praktek\convose-customizer\popup.js"` after editing JS files.
-
-
-## 4d. Experimental View: Arcade Style (`settings.arcadeMode`)
-
-8-bit game look. `buildArcadeCss()` in `content.js` returns `buildSkeuoCss({...settings, cyberFx:false})` (same layout hooks, no textures) plus a flattening layer: thick `#1a1a1a` outlines, hard offset shadows, no gradients, gold buttons, brick-block sidebar made from gradients, Press Start 2P for labels only. Priority: skeuo > arcade > cyber > irc. It reuses the `data-cy-*` and `data-irc-mine` attributes. No overlay nodes. The popup makes four mode checkboxes mutually exclusive and resets all mode flags when a preset is applied.
-
-
-## 4e. Experimental View: Neo-Brutal Style (`settings.brutalMode`)
-
-`buildBrutalCss()` returns `buildArcadeCss()` plus a re-colouring layer: dot-grid page, 2px black outlines, 3px hard shadows, Bebas Neue titles, black text on all light surfaces. Priority: skeuo > arcade > brutal > cyber > irc. Sidebar text colours use `:not(#bk)` to gain id-level specificity over Convose's and the skeuo layer's `!important` white rules, and the chip and the bottom bar are targeted themselves (their text is often a direct text node, not a child). No overlay nodes.
-
-Auto contrast: `inkOn(hex)` (WCAG luminance) picks `#111111` or `#ffffff` for header, buttons, own and other bubbles, sidebar labels and hover. `buildBrutalCss` passes `textColor = inkOn(bubbleColor)` to the arcade/skeuo layers; the base block still uses the raw `textColor`, so bubble text is re-forced with a higher-specificity `:is(div.block, span, p ...)` rule.
-
-## 5. Profile pictures and popup (1.8)
-
-The base surface rule used the `background` shorthand with `!important`, which wiped `background-image` on banners and avatars. It is now `background-color` only; `background-image: none` is applied separately and excludes elements whose style or class contains `url(` or that use `bg-cover`/`bg-contain`. The banner placeholder rule also skips elements with an `img` child or `bg-[` class. The popup is generated: preset chips are grouped by category (`data-cat`), tabs switch `.pane` blocks, and the hidden `#themePreset` select is kept so `popup.js` logic is unchanged.
-
-Skeuo sidebar text now follows the denim brightness: `darkenHex(SIDE, 24)` -> `inkOn()` picks cream or near-black for rows, chips, the three top buttons (Search a call, Start a group, Convose events), section labels and hover (`inkOn(accent)`). `cream` stays constant for the header and call panel.
+- **Strict Ban on Emojis**: Never use emojis anywhere in code, UI components, HTML, JSX, CSS, templates, strings, comments, logs, or user notifications. Use SVG icons or clear text badges (such as `EXP`).
+- **Syntax Validation**: Always run `node --check "D:\Praktek\convose-customizer\content.js"; node --check "D:\Praktek\convose-customizer\popup.js"` after editing JavaScript files.
+- **IIFE Wrapping**: Keep `content.js` wrapped in an IIFE `(() => { ... })()` so on-demand re-injection via `chrome.scripting.executeScript` never throws duplicate identifier errors.
+- **Clickable Symbol Links**: When referencing files or symbols in responses or documentation, provide clickable markdown links with `file:///` URLs using forward slashes.

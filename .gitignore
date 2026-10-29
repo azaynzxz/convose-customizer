@@ -3,3 +3,7 @@ screenshoots/0*.png
 screenshoots/automated/
 
 screenshoots/
+
+# Dependencies
+node_modules/
+

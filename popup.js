@@ -64,6 +64,13 @@ const THEME_PRESETS = {
     textColor: "#eee8d5"
   },
   "komanda-irc": {
+    ircMode: true,
+    cyberMode: false,
+    skeuoMode: false,
+    arcadeMode: false,
+    brutalMode: false,
+    spookyMode: false,
+    spookyBlood: false,
     bgColor: "#1d2328",
     sidebarColor: "#283037",
     cardColor: "#1d2328",
